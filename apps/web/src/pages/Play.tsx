@@ -7,7 +7,7 @@ import { formatLabel, Masthead, MatchCard, PayoffGrid, StandingsTable, StatusPil
 export default function Play() {
   const navigate = useNavigate();
   const token = storage.playerToken();
-  const [tab, setTab] = useState<"arena" | "estrategia">("estrategia");
+  const [tab, setTab] = useState<"arena" | "estrategia" | "historial">("estrategia");
   const [me, setMe] = useState<Player | null>(null);
   const [event, setEvent] = useState<EventInfo | null>(null);
   const [avatars, setAvatars] = useState<Avatar[]>([]);
@@ -29,6 +29,9 @@ export default function Play() {
         setAvatars(body.avatars);
         setPrompt(body.player.strategy_prompt || "");
         setAvatarId(body.player.avatar_id || "");
+        if (body.event?.status && body.event.status !== "registration") {
+          setTab("historial");
+        }
       })
       .catch(() => {
         storage.clearPlayer();
@@ -68,12 +71,24 @@ export default function Play() {
           <nav>
             <StatusPill status={live?.event.status || event.status} />
             <Link to={`/tablero/${event.code}`}>Tablero</Link>
+            <button
+              className="btn-link"
+              type="button"
+              onClick={() => {
+                storage.clearPlayer();
+                navigate("/");
+              }}
+            >
+              Salir
+            </button>
           </nav>
         }
       />
       <div className="main" style={{ paddingBottom: 24 }}>
         {tab === "arena" ? (
           <Arena live={live} me={player.id} event={event} />
+        ) : tab === "historial" ? (
+          <History live={live} me={player.id} event={event} />
         ) : (
           <form onSubmit={save}>
             <p className="kicker">{event.name}</p>
@@ -131,6 +146,9 @@ export default function Play() {
         <button className={tab === "arena" ? "active" : ""} onClick={() => setTab("arena")} type="button">
           Arena
         </button>
+        <button className={tab === "historial" ? "active" : ""} onClick={() => setTab("historial")} type="button">
+          Historial
+        </button>
         <button className={tab === "estrategia" ? "active" : ""} onClick={() => setTab("estrategia")} type="button">
           Estrategia
         </button>
@@ -181,6 +199,44 @@ function Arena({
         {running.map((match) => (
           <MatchCard key={match.id} match={match} />
         ))}
+      </div>
+    </>
+  );
+}
+
+function History({
+  live,
+  me,
+  event,
+}: {
+  live: ReturnType<typeof useLive>["live"];
+  me: string;
+  event: EventInfo;
+}) {
+  const mine = live?.matches.filter((item) => item.player_a_id === me || item.player_b_id === me) || [];
+  const standing = live?.standings.find((row) => row.player_id === me);
+  const won = mine.filter((item) => item.winner_id === me && item.status === "completed").length;
+  return (
+    <>
+      <p className="kicker">{event.code}</p>
+      <h2>Tu historial</h2>
+      <p className="hint">Combates de esta inscripción. Entrá de nuevo con tu nombre y clave si te salís.</p>
+      <div className="grid grid-3" style={{ margin: "12px 0 18px" }}>
+        <div className="card stat">
+          <span>Puesto</span>
+          <b>{standing?.rank || "—"}</b>
+        </div>
+        <div className="card stat">
+          <span>Puntos</span>
+          <b>{standing?.points ?? 0}</b>
+        </div>
+        <div className="card stat">
+          <span>Ganados</span>
+          <b>{won}</b>
+        </div>
+      </div>
+      <div className="grid">
+        {mine.length ? mine.map((match) => <MatchCard key={match.id} match={match} />) : <p className="hint">Todavía no jugaste ningún combate.</p>}
       </div>
     </>
   );

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
@@ -22,3 +22,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def migrate_schema() -> None:
+    inspector = inspect(engine)
+    if "players" not in inspector.get_table_names():
+        return
+    columns = {item["name"] for item in inspector.get_columns("players")}
+    if "password_hash" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE players ADD COLUMN password_hash VARCHAR(64) DEFAULT ''"))

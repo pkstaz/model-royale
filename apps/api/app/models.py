@@ -67,6 +67,7 @@ class Player(Base):
     avatar_id: Mapped[str | None] = mapped_column(ForeignKey("avatars.id"), nullable=True)
     strategy_prompt: Mapped[str] = mapped_column(Text, default="")
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(64), default="")
     seed: Mapped[int] = mapped_column(Integer, default=0)
     group_label: Mapped[str | None] = mapped_column(String(8), nullable=True)
     eliminated: Mapped[bool] = mapped_column(Boolean, default=False)

@@ -71,6 +71,13 @@ class EventIn(BaseModel):
 class JoinIn(BaseModel):
     code: str
     display_name: str = Field(min_length=2, max_length=32)
+    password: str = Field(min_length=4, max_length=64)
+
+
+class PlayerLoginIn(BaseModel):
+    code: str
+    display_name: str = Field(min_length=2, max_length=32)
+    password: str = Field(min_length=4, max_length=64)
 
 
 class StrategyIn(BaseModel):

@@ -1,21 +1,46 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, storage } from "../api";
 import { Masthead } from "../ui";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [code, setCode] = useState("TALLER");
-  const [name, setName] = useState("");
+  const [mode, setMode] = useState<"join" | "login">("join");
+  const [code, setCode] = useState(() => localStorage.getItem("mr_code") || "TALLER");
+  const [name, setName] = useState(() => localStorage.getItem("mr_name") || "");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [hasSession, setHasSession] = useState(Boolean(storage.playerToken()));
 
-  const onJoin = async (event: FormEvent) => {
+  useEffect(() => {
+    const token = storage.playerToken();
+    if (!token) {
+      setHasSession(false);
+      return;
+    }
+    api
+      .get("/api/play/me", token)
+      .then(() => setHasSession(true))
+      .catch(() => {
+        storage.clearPlayer();
+        setHasSession(false);
+      });
+  }, []);
+
+  const remember = () => {
+    localStorage.setItem("mr_code", code);
+    localStorage.setItem("mr_name", name);
+  };
+
+  const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      const body = await api.post("/api/play/join", { code, display_name: name });
+      remember();
+      const path = mode === "join" ? "/api/play/join" : "/api/play/login";
+      const body = await api.post(path, { code, display_name: name, password });
       storage.setPlayerToken(body.token);
       navigate("/jugar");
     } catch (err) {
@@ -42,7 +67,21 @@ export default function Home() {
           Tú no combates: inscribes un modelo ya servido en el cluster, le das instrucciones, y el
           tablero muestra quién avanza ronda a ronda.
         </p>
-        <form className="card" onSubmit={onJoin}>
+        {hasSession ? (
+          <p className="card" style={{ marginBottom: 16 }}>
+            Ya tenés una sesión en este dispositivo.{" "}
+            <Link to="/jugar">Volver a tu arena</Link>
+          </p>
+        ) : null}
+        <form className="card" onSubmit={onSubmit}>
+          <div className="seg">
+            <button type="button" className={mode === "join" ? "active" : ""} onClick={() => setMode("join")}>
+              Inscribirse
+            </button>
+            <button type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
+              Entrar
+            </button>
+          </div>
           <label className="field">
             <span>Código del evento</span>
             <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} autoCapitalize="characters" />
@@ -51,14 +90,28 @@ export default function Home() {
             <span>Tu nombre</span>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ada" required minLength={2} />
           </label>
+          <label className="field">
+            <span>{mode === "join" ? "Elegí una clave" : "Tu clave"}</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={4}
+              autoComplete={mode === "join" ? "new-password" : "current-password"}
+              placeholder="mínimo 4 caracteres"
+            />
+          </label>
           {error ? <p className="flash">{error}</p> : null}
           <button className="btn btn-primary" type="submit" disabled={busy} style={{ width: "100%" }}>
-            Inscribirse
+            {mode === "join" ? "Inscribirse" : "Entrar a mi historial"}
           </button>
+          <p className="hint" style={{ marginTop: 12 }}>
+            {mode === "join"
+              ? "Guardá la clave: con ella volvés a entrar al mismo evento aunque te salgas."
+              : "Podés entrar aunque el evento ya haya arrancado o terminado, para ver tus combates."}
+          </p>
         </form>
-        <p className="hint" style={{ marginTop: 16 }}>
-          El admin abre la inscripción. Los modelos viven fuera de este juego: aquí solo se apunta al endpoint.
-        </p>
       </div>
     </div>
   );

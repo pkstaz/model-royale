@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -14,6 +15,16 @@ from app.models import Player
 
 def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(f"model-royale:{password}".encode()).hexdigest()
+
+
+def verify_password(password: str, stored: str) -> bool:
+    if not stored:
+        return False
+    return hmac.compare_digest(hash_password(password), stored)
 
 
 def issue_player_jwt(player_id: str) -> str:
