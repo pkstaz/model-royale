@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { LangSwitch, useT, type MsgKey } from "./i18n";
 import type { EventInfo, Live, Match, Standing } from "./types";
 
 export function Mark() {
@@ -14,12 +15,14 @@ export function Masthead({ right }: { right?: ReactNode }) {
         <Mark />
         Model Royale
       </Link>
+      <LangSwitch />
       {right}
     </header>
   );
 }
 
 export function StatusPill({ status }: { status: string }) {
+  const { t } = useT();
   const map: Record<string, string> = {
     draft: "warn",
     registration: "info",
@@ -28,46 +31,52 @@ export function StatusPill({ status }: { status: string }) {
     pending: "warn",
     bye: "info",
   };
-  const labels: Record<string, string> = {
-    draft: "Borrador",
-    registration: "Inscripción",
-    running: "En vivo",
-    completed: "Cerrado",
-    pending: "Pendiente",
-    bye: "Bye",
+  const labels: Record<string, MsgKey> = {
+    draft: "statusDraft",
+    registration: "statusRegistration",
+    running: "statusRunning",
+    completed: "statusCompleted",
+    pending: "statusPending",
+    bye: "statusBye",
   };
-  return <span className={`pill ${map[status] || ""}`}>{labels[status] || status}</span>;
+  const key = labels[status];
+  return <span className={`pill ${map[status] || ""}`}>{key ? t(key) : status}</span>;
 }
 
 export function PayoffGrid({ payoff }: { payoff: Record<string, number[]> }) {
+  const { t } = useT();
   const cell = (key: string) => (payoff?.[key] || [0, 0]).join(" / ");
   return (
     <div className="payoff">
       <div />
-      <div>Oponente A</div>
-      <div>Oponente B</div>
-      <div>Tú A</div>
+      <div>{t("opponentA")}</div>
+      <div>{t("opponentB")}</div>
+      <div>{t("youA")}</div>
       <div>{cell("AA")}</div>
       <div>{cell("AB")}</div>
-      <div>Tú B</div>
+      <div>{t("youB")}</div>
       <div>{cell("BA")}</div>
       <div>{cell("BB")}</div>
     </div>
   );
 }
 
-export function formatLabel(event: EventInfo) {
-  const formats: Record<string, string> = {
-    round_robin: "Todos contra todos",
-    groups: "Grupos + eliminación",
-    elimination: "Eliminación directa",
+export function formatLabel(event: EventInfo, t: (key: MsgKey, vars?: Record<string, string | number>) => string) {
+  const formats: Record<string, MsgKey> = {
+    round_robin: "fmtRoundRobin",
+    groups: "fmtGroups",
+    elimination: "fmtElimination",
   };
-  const reveal: Record<string, string> = {
-    blind: "Ciego",
-    history: "Con historial",
-    open: "Abierto",
+  const reveal: Record<string, MsgKey> = {
+    blind: "revealBlindShort",
+    history: "revealHistoryShort",
+    open: "revealOpenShort",
   };
-  return `${formats[event.format] || event.format} · ${event.rounds_per_match} rondas · ${reveal[event.reveal_mode] || event.reveal_mode}`;
+  return t("fmtLabel", {
+    format: t(formats[event.format] || "fmtElimination"),
+    rounds: event.rounds_per_match,
+    reveal: t(reveal[event.reveal_mode] || "revealHistoryShort"),
+  });
 }
 
 export function StandingsTable({
@@ -77,12 +86,13 @@ export function StandingsTable({
   standings: Standing[];
   me?: string;
 }) {
+  const { t } = useT();
   return (
     <table className="table">
       <thead>
         <tr>
           <th>#</th>
-          <th>Jugador</th>
+          <th>{t("player")}</th>
           <th>Pts</th>
           <th>G</th>
           <th>P</th>
@@ -108,21 +118,22 @@ export function StandingsTable({
 }
 
 export function MatchCard({ match }: { match: Match }) {
+  const { t } = useT();
   return (
     <article className={`match ${match.status}`}>
       <div className="fighters">
         <div className={`fighter ${match.winner_id === match.player_a_id ? "win" : ""}`}>
-          <div>{match.player_a_name || "Bye"}</div>
+          <div>{match.player_a_name || t("statusBye")}</div>
           <div className="score">{match.score_a}</div>
         </div>
         <StatusPill status={match.status} />
         <div className={`fighter ${match.winner_id === match.player_b_id ? "win" : ""}`} style={{ textAlign: "right" }}>
-          <div>{match.player_b_name || "Bye"}</div>
+          <div>{match.player_b_name || t("statusBye")}</div>
           <div className="score">{match.score_b}</div>
         </div>
       </div>
       <div className="hint" style={{ marginTop: 6 }}>
-        {match.stage} {match.group_label ? `· grupo ${match.group_label}` : ""} · oleada {match.wave}
+        {match.stage} {match.group_label ? `· ${t("group")} ${match.group_label}` : ""} · {t("wave")} {match.wave}
       </div>
       {match.rounds?.length ? (
         <div className="rounds">

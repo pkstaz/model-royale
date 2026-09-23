@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { api, storage } from "../api";
+import { tApiError, useT } from "../i18n";
 import type { Avatar } from "../types";
 
 const blank = {
@@ -18,6 +19,7 @@ const blank = {
 };
 
 export default function AdminAvatars() {
+  const { t } = useT();
   const token = storage.adminToken();
   const [rows, setRows] = useState<Avatar[]>([]);
   const [form, setForm] = useState(blank);
@@ -44,7 +46,7 @@ export default function AdminAvatars() {
       setEditing(null);
       load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(tApiError((err as Error).message, t));
     }
   };
 
@@ -67,38 +69,35 @@ export default function AdminAvatars() {
   };
 
   const test = async (id: string) => {
-    setPing("Probando…");
+    setPing(t("testing"));
     const body = await api.post(`/api/admin/avatars/${id}/ping`, {}, token);
-    setPing(body.ok ? `OK: ${body.detail}` : `Falló: ${body.detail}`);
+    setPing(body.ok ? `OK: ${body.detail}` : t("failed", { detail: body.detail }));
   };
 
   return (
     <>
-      <p className="kicker">Mantenedor</p>
-      <h1>Avatares</h1>
-      <p className="hint">
-        Un avatar es una ficha: nombre, color y endpoint OpenAI-compatible. El serving (InferenceService, vLLM) vive en
-        otro namespace / otro GitOps.
-      </p>
+      <p className="kicker">{t("maintainer")}</p>
+      <h1>{t("avatars")}</h1>
+      <p className="hint">{t("avatarsHint")}</p>
       {error ? <p className="flash">{error}</p> : null}
       {ping ? <p className="hint">{ping}</p> : null}
       <div className="grid grid-2" style={{ marginTop: 16 }}>
         <form className="card" onSubmit={submit}>
-          <h3>{editing ? "Editar" : "Nuevo avatar"}</h3>
+          <h3>{editing ? t("edit") : t("newAvatar")}</h3>
           <label className="field">
-            <span>Nombre</span>
+            <span>{t("name")}</span>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </label>
           <label className="field">
-            <span>Slug</span>
+            <span>{t("slug")}</span>
             <input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="granite" />
           </label>
           <label className="field">
-            <span>Color</span>
+            <span>{t("color")}</span>
             <input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
           </label>
           <label className="field">
-            <span>Base URL (incluye /v1)</span>
+            <span>{t("baseUrl")}</span>
             <input
               value={form.base_url}
               onChange={(e) => setForm({ ...form, base_url: e.target.value })}
@@ -106,7 +105,7 @@ export default function AdminAvatars() {
             />
           </label>
           <label className="field">
-            <span>Model id</span>
+            <span>{t("modelId")}</span>
             <input
               value={form.model_id}
               onChange={(e) => setForm({ ...form, model_id: e.target.value })}
@@ -114,20 +113,20 @@ export default function AdminAvatars() {
             />
           </label>
           <label className="field">
-            <span>API key (opcional, vacío = no tocar)</span>
+            <span>{t("apiKey")}</span>
             <input value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} />
           </label>
           <label className="field">
-            <span>Personalidad (system del avatar, visible al jugador)</span>
+            <span>{t("personality")}</span>
             <textarea value={form.personality} onChange={(e) => setForm({ ...form, personality: e.target.value })} />
           </label>
           <label className="field">
-            <span>Descripción</span>
+            <span>{t("description")}</span>
             <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </label>
           <div className="btn-row">
             <button className="btn btn-primary" type="submit">
-              {editing ? "Guardar" : "Crear"}
+              {editing ? t("save") : t("create")}
             </button>
             {editing ? (
               <button
@@ -138,24 +137,24 @@ export default function AdminAvatars() {
                   setForm(blank);
                 }}
               >
-                Cancelar
+                {t("cancel")}
               </button>
             ) : null}
           </div>
         </form>
         <div className="card">
-          <h3>Registrados</h3>
+          <h3>{t("registeredList")}</h3>
           {rows.map((avatar) => (
             <div key={avatar.id} style={{ padding: "12px 0", borderBottom: "1px solid var(--bg-400)" }}>
               <span className="swatch" style={{ background: avatar.color }} />
               <strong>{avatar.name}</strong>
-              <span className="hint"> · {avatar.reachable ? avatar.model_id : "sin endpoint (mock)"}</span>
+              <span className="hint"> · {avatar.reachable ? avatar.model_id : t("noEndpoint")}</span>
               <div className="btn-row" style={{ marginTop: 8 }}>
                 <button className="btn" type="button" onClick={() => edit(avatar)}>
-                  Editar
+                  {t("edit")}
                 </button>
                 <button className="btn" type="button" onClick={() => test(avatar.id)}>
-                  Probar
+                  {t("test")}
                 </button>
               </div>
             </div>

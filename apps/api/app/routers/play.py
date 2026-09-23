@@ -33,7 +33,7 @@ async def join(body: JoinIn, db: Session = Depends(get_db)):
     if event.status != "registration":
         raise HTTPException(
             status_code=409,
-            detail="La inscripción no está abierta. Si ya te inscribiste, usá Entrar.",
+            detail="La inscripción no está abierta. Si ya te inscribiste, usa Entrar.",
         )
     count = db.query(Player).filter(Player.event_id == event.id).count()
     if count >= event.max_players:
@@ -43,7 +43,7 @@ async def join(body: JoinIn, db: Session = Depends(get_db)):
         db.query(Player).filter(Player.event_id == event.id, Player.display_name == name).first()
     )
     if existing:
-        raise HTTPException(status_code=409, detail="Ese nombre ya está inscrito. Entrá con tu clave.")
+        raise HTTPException(status_code=409, detail="Ese nombre ya está inscrito. Entra con tu clave.")
     token = secrets.token_urlsafe(24)
     player = Player(
         event_id=event.id,
@@ -74,7 +74,7 @@ def login(body: PlayerLoginIn, db: Session = Depends(get_db)):
     if not player.password_hash:
         raise HTTPException(
             status_code=401,
-            detail="Esta cuenta no tiene clave. Inscribite de nuevo o pedile un reset al admin.",
+            detail="Esta cuenta no tiene clave. Inscríbete de nuevo o pide un reinicio al admin.",
         )
     if not verify_password(body.password, player.password_hash):
         raise HTTPException(status_code=401, detail="Clave incorrecta")

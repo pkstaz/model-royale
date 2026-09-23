@@ -1,9 +1,11 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, storage } from "../api";
+import { tApiError, useT } from "../i18n";
 import { Masthead } from "../ui";
 
 export default function AdminLogin() {
+  const { t } = useT();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,7 +17,7 @@ export default function AdminLogin() {
       storage.setAdminToken(body.token);
       navigate("/admin");
     } catch (err) {
-      setError((err as Error).message);
+      setError(tApiError((err as Error).message, t));
     }
   };
 
@@ -23,17 +25,17 @@ export default function AdminLogin() {
     <div className="page hero">
       <Masthead />
       <div className="hero-body">
-        <p className="kicker">Mantenedor</p>
-        <h1>Admin</h1>
-        <p className="lede">Avatares, eventos y el tablero. Los modelos se configuran aquí; viven en OpenShift AI.</p>
+        <p className="kicker">{t("maintainer")}</p>
+        <h1>{t("admin")}</h1>
+        <p className="lede">{t("adminLede")}</p>
         <form className="card" onSubmit={onSubmit}>
           <label className="field">
-            <span>Password</span>
+            <span>{t("password")}</span>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </label>
           {error ? <p className="flash">{error}</p> : null}
           <button className="btn btn-primary" type="submit">
-            Entrar
+            {t("enter")}
           </button>
         </form>
       </div>

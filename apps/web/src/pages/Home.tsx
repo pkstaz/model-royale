@@ -1,9 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, storage } from "../api";
+import { tApiError, useT } from "../i18n";
 import { Masthead } from "../ui";
 
 export default function Home() {
+  const { t } = useT();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"join" | "login">("join");
   const [code, setCode] = useState(() => localStorage.getItem("mr_code") || "TALLER");
@@ -44,7 +46,7 @@ export default function Home() {
       storage.setPlayerToken(body.token);
       navigate("/jugar");
     } catch (err) {
-      setError((err as Error).message);
+      setError(tApiError((err as Error).message, t));
     } finally {
       setBusy(false);
     }
@@ -55,43 +57,39 @@ export default function Home() {
       <Masthead
         right={
           <nav>
-            <Link to="/tablero/TALLER">Tablero</Link>
-            <Link to="/admin">Admin</Link>
+            <Link to="/tablero/TALLER">{t("board")}</Link>
+            <Link to="/admin">{t("admin")}</Link>
           </nav>
         }
       />
       <div className="hero-body">
-        <div className="kicker">OpenShift AI · Battle royale</div>
-        <h1>Elige un avatar. Escribe la estrategia. Que peleen los modelos.</h1>
-        <p className="lede">
-          Tú no combates: inscribes un modelo ya servido en el cluster, le das instrucciones, y el
-          tablero muestra quién avanza ronda a ronda.
-        </p>
+        <div className="kicker">{t("kicker")}</div>
+        <h1>{t("heroTitle")}</h1>
+        <p className="lede">{t("heroLede")}</p>
         {hasSession ? (
           <p className="card" style={{ marginBottom: 16 }}>
-            Ya tenés una sesión en este dispositivo.{" "}
-            <Link to="/jugar">Volver a tu arena</Link>
+            {t("hasSession")} <Link to="/jugar">{t("backToArena")}</Link>
           </p>
         ) : null}
         <form className="card" onSubmit={onSubmit}>
           <div className="seg">
             <button type="button" className={mode === "join" ? "active" : ""} onClick={() => setMode("join")}>
-              Inscribirse
+              {t("join")}
             </button>
             <button type="button" className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
-              Entrar
+              {t("enter")}
             </button>
           </div>
           <label className="field">
-            <span>Código del evento</span>
+            <span>{t("eventCode")}</span>
             <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} autoCapitalize="characters" />
           </label>
           <label className="field">
-            <span>Tu nombre</span>
+            <span>{t("yourName")}</span>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ada" required minLength={2} />
           </label>
           <label className="field">
-            <span>{mode === "join" ? "Elegí una clave" : "Tu clave"}</span>
+            <span>{mode === "join" ? t("createPassword") : t("yourPassword")}</span>
             <input
               type="password"
               value={password}
@@ -99,17 +97,15 @@ export default function Home() {
               required
               minLength={4}
               autoComplete={mode === "join" ? "new-password" : "current-password"}
-              placeholder="mínimo 4 caracteres"
+              placeholder={t("passwordHint")}
             />
           </label>
           {error ? <p className="flash">{error}</p> : null}
           <button className="btn btn-primary" type="submit" disabled={busy} style={{ width: "100%" }}>
-            {mode === "join" ? "Inscribirse" : "Entrar a mi historial"}
+            {mode === "join" ? t("join") : t("enterHistory")}
           </button>
           <p className="hint" style={{ marginTop: 12 }}>
-            {mode === "join"
-              ? "Guardá la clave: con ella volvés a entrar al mismo evento aunque te salgas."
-              : "Podés entrar aunque el evento ya haya arrancado o terminado, para ver tus combates."}
+            {mode === "join" ? t("joinHint") : t("loginHint")}
           </p>
         </form>
       </div>

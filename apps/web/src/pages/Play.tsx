@@ -1,10 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, storage } from "../api";
+import { tApiError, useT } from "../i18n";
 import type { Avatar, EventInfo, Player } from "../types";
 import { formatLabel, Masthead, MatchCard, PayoffGrid, StandingsTable, StatusPill, useLive } from "../ui";
 
 export default function Play() {
+  const { t } = useT();
   const navigate = useNavigate();
   const token = storage.playerToken();
   const [tab, setTab] = useState<"arena" | "estrategia" | "historial">("estrategia");
@@ -49,9 +51,9 @@ export default function Play() {
     try {
       const body = await api.patch("/api/play/me", { avatar_id: avatarId, strategy_prompt: prompt }, token);
       setMe(body);
-      setMsg("Estrategia guardada");
+      setMsg(t("saved"));
     } catch (err) {
-      setError((err as Error).message);
+      setError(tApiError((err as Error).message, t));
     }
   };
 
@@ -59,7 +61,7 @@ export default function Play() {
     return (
       <div className="page">
         <Masthead />
-        <p style={{ padding: 24 }}>Cargando…</p>
+        <p style={{ padding: 24 }}>{t("loading")}</p>
       </div>
     );
   }
@@ -70,7 +72,7 @@ export default function Play() {
         right={
           <nav>
             <StatusPill status={live?.event.status || event.status} />
-            <Link to={`/tablero/${event.code}`}>Tablero</Link>
+            <Link to={`/tablero/${event.code}`}>{t("board")}</Link>
             <button
               className="btn-link"
               type="button"
@@ -79,7 +81,7 @@ export default function Play() {
                 navigate("/");
               }}
             >
-              Salir
+              {t("exit")}
             </button>
           </nav>
         }
@@ -92,18 +94,18 @@ export default function Play() {
         ) : (
           <form onSubmit={save}>
             <p className="kicker">{event.name}</p>
-            <h2>Tu estrategia</h2>
+            <h2>{t("yourStrategy")}</h2>
             <p className="hint">
-              {formatLabel(event)}. El system prompt no se edita. Tus instrucciones sí, excepto en combate.
+              {formatLabel(event, t)}. {t("strategyHint")}
             </p>
             <div className="card" style={{ margin: "16px 0" }}>
-              <strong>Reglas (system)</strong>
+              <strong>{t("rules")}</strong>
               <pre className="rules">{event.rules_prompt}</pre>
               <div style={{ marginTop: 12 }}>
                 <PayoffGrid payoff={event.payoff} />
               </div>
             </div>
-            <h3>Avatar</h3>
+            <h3>{t("avatar")}</h3>
             <div className="avatar-grid">
               {avatars.map((avatar) => (
                 <button
@@ -123,34 +125,32 @@ export default function Play() {
               ))}
             </div>
             <label className="field" style={{ marginTop: 16 }}>
-              <span>Instrucciones extra</span>
+              <span>{t("extraInstructions")}</span>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 disabled={player.locked}
-                placeholder="Ej: tit-for-tat, empiezo en B, si me traicionan dos veces paso a A."
+                placeholder={t("extraPlaceholder")}
               />
             </label>
-            {player.locked ? (
-              <p className="flash">Estás en combate. La estrategia se desbloquea al terminar.</p>
-            ) : null}
+            {player.locked ? <p className="flash">{t("inBattle")}</p> : null}
             {error ? <p className="flash">{error}</p> : null}
             {msg ? <p className="okmsg">{msg}</p> : null}
             <button className="btn btn-primary" disabled={player.locked || !avatarId}>
-              Guardar
+              {t("save")}
             </button>
           </form>
         )}
       </div>
       <div className="tabbar">
         <button className={tab === "arena" ? "active" : ""} onClick={() => setTab("arena")} type="button">
-          Arena
+          {t("arena")}
         </button>
         <button className={tab === "historial" ? "active" : ""} onClick={() => setTab("historial")} type="button">
-          Historial
+          {t("history")}
         </button>
         <button className={tab === "estrategia" ? "active" : ""} onClick={() => setTab("estrategia")} type="button">
-          Estrategia
+          {t("strategy")}
         </button>
       </div>
     </div>
@@ -166,35 +166,36 @@ function Arena({
   me: string;
   event: EventInfo;
 }) {
+  const { t } = useT();
   const mine = live?.matches.filter((item) => item.player_a_id === me || item.player_b_id === me) || [];
   const running = live?.matches.filter((item) => item.status === "running") || [];
   return (
     <>
       <p className="kicker">{event.code}</p>
-      <h2>Arena</h2>
+      <h2>{t("arena")}</h2>
       <div className="grid grid-3" style={{ margin: "12px 0 18px" }}>
         <div className="card stat">
-          <span>Jugadores</span>
+          <span>{t("players")}</span>
           <b>{live?.players.length || 0}</b>
         </div>
         <div className="card stat">
-          <span>En combate</span>
+          <span>{t("inCombat")}</span>
           <b>{running.length}</b>
         </div>
         <div className="card stat">
-          <span>Tu puesto</span>
+          <span>{t("yourRank")}</span>
           <b>{live?.standings.find((row) => row.player_id === me)?.rank || "—"}</b>
         </div>
       </div>
-      <h3>Clasificación</h3>
+      <h3>{t("standings")}</h3>
       <div className="card" style={{ marginBottom: 16 }}>
         <StandingsTable standings={live?.standings || []} me={me} />
       </div>
-      <h3>Tus combates</h3>
+      <h3>{t("yourMatches")}</h3>
       <div className="grid">
-        {mine.length ? mine.map((match) => <MatchCard key={match.id} match={match} />) : <p className="hint">Aún no hay emparejamientos.</p>}
+        {mine.length ? mine.map((match) => <MatchCard key={match.id} match={match} />) : <p className="hint">{t("noPairings")}</p>}
       </div>
-      <h3 style={{ marginTop: 18 }}>En vivo</h3>
+      <h3 style={{ marginTop: 18 }}>{t("liveNow")}</h3>
       <div className="grid">
         {running.map((match) => (
           <MatchCard key={match.id} match={match} />
@@ -213,30 +214,31 @@ function History({
   me: string;
   event: EventInfo;
 }) {
+  const { t } = useT();
   const mine = live?.matches.filter((item) => item.player_a_id === me || item.player_b_id === me) || [];
   const standing = live?.standings.find((row) => row.player_id === me);
   const won = mine.filter((item) => item.winner_id === me && item.status === "completed").length;
   return (
     <>
       <p className="kicker">{event.code}</p>
-      <h2>Tu historial</h2>
-      <p className="hint">Combates de esta inscripción. Entrá de nuevo con tu nombre y clave si te salís.</p>
+      <h2>{t("yourHistory")}</h2>
+      <p className="hint">{t("historyHint")}</p>
       <div className="grid grid-3" style={{ margin: "12px 0 18px" }}>
         <div className="card stat">
-          <span>Puesto</span>
+          <span>{t("rank")}</span>
           <b>{standing?.rank || "—"}</b>
         </div>
         <div className="card stat">
-          <span>Puntos</span>
+          <span>{t("points")}</span>
           <b>{standing?.points ?? 0}</b>
         </div>
         <div className="card stat">
-          <span>Ganados</span>
+          <span>{t("wins")}</span>
           <b>{won}</b>
         </div>
       </div>
       <div className="grid">
-        {mine.length ? mine.map((match) => <MatchCard key={match.id} match={match} />) : <p className="hint">Todavía no jugaste ningún combate.</p>}
+        {mine.length ? mine.map((match) => <MatchCard key={match.id} match={match} />) : <p className="hint">{t("noMatches")}</p>}
       </div>
     </>
   );

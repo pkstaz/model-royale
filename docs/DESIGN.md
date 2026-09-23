@@ -78,7 +78,7 @@ Un **combate** = N rondas (3 o 5, o las que ponga el admin) entre dos jugadores.
 
 - **Jugador** — web mobile: inscribirse, elegir avatar, escribir estrategia, ver el tablero.
 - **Tablero** — dashboard centralizado (proyector o móvil): inscritos, quién avanza, combates en vivo, resultados.
-- **Admin** — web de escritorio, responsive: avatares (endpoints), eventos (formato, matriz, revelado, juez), abrir inscripciones, largar, seguir el vivo.
+- **Admin** — web de escritorio, responsive: avatares (endpoints), eventos (formato, matriz, revelado, juez), abrir inscripciones, iniciar, seguir el vivo.
 
 ## Runtime
 

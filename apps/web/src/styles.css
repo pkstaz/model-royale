@@ -84,6 +84,27 @@ h1, h2, h3, h4 { font-family: var(--display); letter-spacing: -0.02em; margin: 0
   font-weight: 900;
 }
 .masthead nav { margin-left: auto; display: flex; gap: 16px; align-items: center; }
+.lang {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-left: 8px;
+}
+.lang button {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.lang button.active {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--bg-400);
+}
 .masthead nav a { color: var(--muted); font-size: 14px; font-weight: 500; }
 .masthead nav a.active, .masthead nav a:hover { color: var(--text); }
 .masthead nav .btn-link { color: var(--muted); font-size: 14px; font-weight: 500; }
@@ -320,4 +341,16 @@ h1, h2, h3, h4 { font-family: var(--display); letter-spacing: -0.02em; margin: 0
   .sidebar { display: none; }
   .main { padding: 16px; }
   .hero h1 { font-size: 36px; }
+  .masthead {
+    height: auto;
+    min-height: var(--masthead);
+    flex-wrap: wrap;
+    padding: 8px 16px;
+    row-gap: 8px;
+  }
+  .lang {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
 }
