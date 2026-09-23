@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels:
+    app: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: model-royale-api
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MOCK_INFERENCE
+              valueFrom:
+                configMapKeyRef:
+                  name: model-royale-config
+                  key: MOCK_INFERENCE
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: model-royale-config
+                  key: CORS_ORIGINS
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: model-royale-secret
+                  key: ADMIN_PASSWORD
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: model-royale-secret
+                  key: SECRET_KEY
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: model-royale-secret
+                  key: DATABASE_URL
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8000
+      targetPort: 8000

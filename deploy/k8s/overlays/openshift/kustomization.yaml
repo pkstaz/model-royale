@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - route.yaml
+images:
+  - name: model-royale-api
+    newName: image-registry.openshift-image-registry.svc:5000/model-royale/api
+    newTag: latest
+  - name: model-royale-web
+    newName: image-registry.openshift-image-registry.svc:5000/model-royale/web
+    newTag: latest

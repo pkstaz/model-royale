@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: model-royale
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: REPLACE_WITH_GIT_REPO
+    targetRevision: main
+    path: deploy/k8s/overlays/openshift
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: model-royale
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  ignoreDifferences: []
+# Este Application publica SOLO el juego (web, api, postgres).
+# Los InferenceServices de OpenShift AI van en otro Application / otro repo.

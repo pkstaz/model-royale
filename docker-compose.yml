@@ -1,0 +1,22 @@
+services:
+  api:
+    build: ./apps/api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:////app/data/royale.db
+      ADMIN_PASSWORD: admin
+      SECRET_KEY: local-dev-key
+      MOCK_INFERENCE: "true"
+      CORS_ORIGINS: "http://localhost:8080,http://localhost:5173"
+    volumes:
+      - api-data:/app/data
+  web:
+    build: ./apps/web
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+
+volumes:
+  api-data:

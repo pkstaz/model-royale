@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+apps/web/.vite/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# Data
+*.db
+*.sqlite
+data/
+apps/api/data/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Build
+coverage/
