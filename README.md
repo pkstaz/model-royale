@@ -92,7 +92,11 @@ Luego entra de nuevo en `/admin` con la clave nueva del Secret. El JWT no vive e
 
 Las URLs de InferenceService se pegan en `/admin`, no en el chart.
 
-Para volver a instalar de cero: `oc delete project model-royale`, espera a que desaparezca, y repite los tres pasos.
+Para volver a instalar de cero, borra el proyecto, espera a que desaparezca, y repite los tres pasos:
+
+```bash
+oc delete project model-royale
+```
 
 Chart: `deploy/helm/model-royale`. GitOps opcional: `deploy/argocd/application.yaml` (completa `repoURL`).
 
