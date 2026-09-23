@@ -75,6 +75,15 @@ oc get secret model-royale-secret -n model-royale \
 oc get route model-royale -n model-royale
 ```
 
+Si reinstalaste y el admin queda en error de token: el navegador todavía tiene el JWT del deploy anterior. En la consola de esa misma URL:
+
+```js
+localStorage.removeItem("mr_admin");
+localStorage.removeItem("mr_player");
+```
+
+Luego entra de nuevo en `/admin` con la clave nueva del Secret. El JWT no vive en el cluster; vive en el browser.
+
 | Ruta | Uso |
 | --- | --- |
 | `https://<host>/` | Jugador |

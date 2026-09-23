@@ -35,4 +35,5 @@ export const storage = {
   adminToken: () => localStorage.getItem("mr_admin") || "",
   setAdminToken: (token: string) => localStorage.setItem("mr_admin", token),
   clearPlayer: () => localStorage.removeItem("mr_player"),
+  clearAdmin: () => localStorage.removeItem("mr_admin"),
 };
