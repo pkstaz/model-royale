@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.auth import hash_password, hash_token, issue_player_jwt, require_player, verify_password
 from app.database import get_db
 from app.engine import publish_snapshot, snapshot
+from app.i18n import t
 from app.models import Avatar, Event, Player
 from app.schemas import JoinIn, PlayerLoginIn, StrategyIn
 from app.serialize import event_out, player_out
@@ -29,21 +30,21 @@ async def join(body: JoinIn, db: Session = Depends(get_db)):
     code = body.code.strip().upper()
     event = db.query(Event).filter(Event.code == code).first()
     if not event:
-        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        raise HTTPException(status_code=404, detail=t("event_not_found"))
     if event.status != "registration":
         raise HTTPException(
             status_code=409,
-            detail="La inscripción no está abierta. Si ya te inscribiste, usa Entrar.",
+            detail=t("reg_closed"),
         )
     count = db.query(Player).filter(Player.event_id == event.id).count()
     if count >= event.max_players:
-        raise HTTPException(status_code=409, detail="Cupo completo")
+        raise HTTPException(status_code=409, detail=t("event_full"))
     name = body.display_name.strip()
     existing = (
         db.query(Player).filter(Player.event_id == event.id, Player.display_name == name).first()
     )
     if existing:
-        raise HTTPException(status_code=409, detail="Ese nombre ya está inscrito. Entra con tu clave.")
+        raise HTTPException(status_code=409, detail=t("name_taken"))
     token = secrets.token_urlsafe(24)
     player = Player(
         event_id=event.id,
@@ -64,20 +65,20 @@ def login(body: PlayerLoginIn, db: Session = Depends(get_db)):
     code = body.code.strip().upper()
     event = db.query(Event).filter(Event.code == code).first()
     if not event:
-        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        raise HTTPException(status_code=404, detail=t("event_not_found"))
     name = body.display_name.strip()
     player = (
         db.query(Player).filter(Player.event_id == event.id, Player.display_name == name).first()
     )
     if not player:
-        raise HTTPException(status_code=404, detail="No hay una inscripción con ese nombre")
+        raise HTTPException(status_code=404, detail=t("no_player"))
     if not player.password_hash:
         raise HTTPException(
             status_code=401,
-            detail="Esta cuenta no tiene clave. Inscríbete de nuevo o pide un reinicio al admin.",
+            detail=t("no_password"),
         )
     if not verify_password(body.password, player.password_hash):
-        raise HTTPException(status_code=401, detail="Clave incorrecta")
+        raise HTTPException(status_code=401, detail=t("bad_password"))
     return _session(db, player, event)
 
 
@@ -125,12 +126,12 @@ async def update_me(
     if player_is_locked(db, player.id):
         raise HTTPException(
             status_code=409,
-            detail="Tu avatar está en combate. Podrás editar cuando termine.",
+            detail=t("in_combat"),
         )
     if body.avatar_id is not None:
         avatar = db.get(Avatar, body.avatar_id)
         if not avatar or not avatar.enabled:
-            raise HTTPException(status_code=404, detail="Avatar no disponible")
+            raise HTTPException(status_code=404, detail=t("avatar_unavailable"))
         player.avatar_id = avatar.id
     if body.strategy_prompt is not None:
         player.strategy_prompt = body.strategy_prompt[:8000]

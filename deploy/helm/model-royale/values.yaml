@@ -1,0 +1,135 @@
+# Model Royale Helm values.
+# This chart publishes the game (web + API, plus SQLite or Postgres). It does not deploy models.
+#
+# lang: en | es | pt — UI, API errors, seed copy, and model prompts. Default English.
+lang: en
+
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+# When imageRegistry is set (values-openshift.yaml), images are
+# {registry}/{imageNamespace}/web|api:{tag}. imageNamespace is the game
+# project (model-royale), never default.
+openshift:
+  imageRegistry: ""
+  imageNamespace: ""
+
+# OpenShift-friendly: do not set runAsUser so the platform can assign a UID.
+podSecurityContext: {}
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+web:
+  replicaCount: 1
+  image:
+    repository: model-royale-web
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+api:
+  # Keep at 1: the match engine and SSE hub are in-process.
+  replicaCount: 1
+  image:
+    repository: model-royale-api
+    tag: ""
+    pullPolicy: IfNotPresent
+  mockInference: false
+  corsOrigins: "*"
+  jwtHours: 72
+  matchPauseSeconds: 1.1
+  llmTimeoutSeconds: 45
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    database: royale
+    username: royale
+  env:
+    userKey: POSTGRES_USER
+    passwordKey: POSTGRES_PASSWORD
+    databaseKey: POSTGRES_DB
+    pgdata: /var/lib/postgresql/data/pgdata
+  dataMountPath: /var/lib/postgresql/data
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  podSecurityContext:
+    fsGroup: 70
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+# Used when postgres.enabled is false (OpenShift default: SQLite on a PVC).
+sqlite:
+  enabled: false
+  mountPath: /app/data
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+databaseUrl: ""
+
+secrets:
+  # Set to reuse a Secret you created (keys: ADMIN_PASSWORD, SECRET_KEY, POSTGRES_PASSWORD, DATABASE_URL).
+  existingSecret: ""
+  # Leave empty to generate on first install and reuse on upgrade.
+  adminPassword: ""
+  secretKey: ""
+  postgresPassword: ""
+
+route:
+  enabled: true
+  host: ""
+  annotations: {}
+  tls:
+    enabled: true
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: model-royale.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []

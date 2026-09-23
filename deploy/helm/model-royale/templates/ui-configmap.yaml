@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "model-royale.fullname" . }}-ui
+  labels:
+    {{- include "model-royale.labels" . | nindent 4 }}
+data:
+  config.json: |
+    {"lang": {{ .Values.lang | quote }}}

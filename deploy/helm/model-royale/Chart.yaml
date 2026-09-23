@@ -1,0 +1,15 @@
+apiVersion: v2
+name: model-royale
+description: Battle royale of LLM avatars. Deploys the game only (web, API, SQLite or Postgres), never models.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - openshift
+  - workshop
+  - llm
+home: https://github.com/pkstaz/model-royale
+sources:
+  - https://github.com/pkstaz/model-royale
+maintainers:
+  - name: Model Royale

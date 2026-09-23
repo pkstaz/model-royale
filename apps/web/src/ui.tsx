@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { LangSwitch, useT, type MsgKey } from "./i18n";
+import { useT, type MsgKey } from "./i18n";
 import type { EventInfo, Live, Match, Standing } from "./types";
 
 export function Mark() {
@@ -15,7 +15,6 @@ export function Masthead({ right }: { right?: ReactNode }) {
         <Mark />
         Model Royale
       </Link>
-      <LangSwitch />
       {right}
     </header>
   );

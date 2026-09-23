@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     jwt_hours: int = 72
     match_pause_seconds: float = 1.1
     llm_timeout_seconds: float = 45.0
+    app_lang: str = "en"
 
     @property
     def origins(self) -> list[str]:

@@ -10,7 +10,12 @@ spec:
   source:
     repoURL: REPLACE_WITH_GIT_REPO
     targetRevision: main
-    path: deploy/k8s/overlays/openshift
+    path: deploy/helm/model-royale
+    helm:
+      releaseName: model-royale
+      valueFiles:
+        - values.yaml
+        - values-openshift.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: model-royale

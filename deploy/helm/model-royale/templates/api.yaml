@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "model-royale.apiName" . }}
+  labels:
+    {{- include "model-royale.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "model-royale.apiSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "model-royale.apiSelectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secrets-config: {{ .Values.secrets | toYaml | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.postgres.enabled }}
+      initContainers:
+        - name: wait-for-db
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - until pg_isready -h {{ include "model-royale.postgresName" . }} -U {{ .Values.postgres.auth.username }}; do sleep 2; done
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: api
+          image: {{ include "model-royale.apiImage" . }}
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: MOCK_INFERENCE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "model-royale.fullname" . }}-config
+                  key: MOCK_INFERENCE
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "model-royale.fullname" . }}-config
+                  key: CORS_ORIGINS
+            - name: JWT_HOURS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "model-royale.fullname" . }}-config
+                  key: JWT_HOURS
+            - name: MATCH_PAUSE_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "model-royale.fullname" . }}-config
+                  key: MATCH_PAUSE_SECONDS
+            - name: LLM_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "model-royale.fullname" . }}-config
+                  key: LLM_TIMEOUT_SECONDS
+            - name: APP_LANG
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "model-royale.fullname" . }}-config
+                  key: APP_LANG
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "model-royale.secretName" . }}
+                  key: ADMIN_PASSWORD
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "model-royale.secretName" . }}
+                  key: SECRET_KEY
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "model-royale.secretName" . }}
+                  key: DATABASE_URL
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+          {{- if .Values.sqlite.enabled }}
+          volumeMounts:
+            - name: sqlite
+              mountPath: {{ .Values.sqlite.mountPath }}
+          {{- end }}
+      {{- if .Values.sqlite.enabled }}
+      volumes:
+        - name: sqlite
+          {{- if .Values.sqlite.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "model-royale.apiName" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "model-royale.apiName" . }}
+  labels:
+    {{- include "model-royale.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  type: {{ .Values.api.service.type }}
+  selector:
+    {{- include "model-royale.apiSelectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.api.service.port }}
+      targetPort: http

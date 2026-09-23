@@ -1,0 +1,29 @@
+# Builds, images, Route, and Helm release all live in this project.
+# helm upgrade --install ... --namespace model-royale --create-namespace -f values-openshift.yaml
+
+openshift:
+  imageRegistry: image-registry.openshift-image-registry.svc:5000
+  imageNamespace: model-royale
+
+web:
+  image:
+    tag: latest
+    pullPolicy: Always
+
+api:
+  image:
+    tag: latest
+    pullPolicy: Always
+
+# SQLite in the API pod — no extra image, works with restricted-v2.
+postgres:
+  enabled: false
+
+sqlite:
+  enabled: true
+
+route:
+  enabled: true
+
+ingress:
+  enabled: false

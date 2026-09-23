@@ -10,13 +10,6 @@ PAYOFF_PRESETS = {
     "stag": {"AA": [1, 1], "AB": [1, 0], "BA": [0, 1], "BB": [4, 4]},
 }
 
-DEFAULT_RULES = """Eres un avatar en Model Royale. En cada ronda eliges exactamente una acción: A o B.
-
-La matriz de pagos de este evento se indica más abajo. Responde únicamente con JSON:
-{"move": "A" o "B", "rationale": "una frase"}
-
-No uses markdown. No expliques fuera del JSON."""
-
 
 class AvatarIn(BaseModel):
     name: str

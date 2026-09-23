@@ -1,0 +1,20 @@
+1. Get the application URL:
+{{- if .Values.route.enabled }}
+  export ROUTE=$(oc get route {{ include "model-royale.fullname" . }} -n {{ .Release.Namespace }} -o jsonpath='{.spec.host}')
+  echo "https://$ROUTE"
+{{- else if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "model-royale.webName" . }} 8080:{{ .Values.web.service.port }}
+{{- end }}
+
+2. Admin password (generated on first install unless you set secrets.adminPassword):
+  kubectl get secret {{ include "model-royale.secretName" . }} -n {{ .Release.Namespace }} -o jsonpath='{.data.ADMIN_PASSWORD}' | base64 -d; echo
+
+3. OpenShift uses SQLite in the API pod (no Postgres image). Events survive on the PVC.
+4. Language is fixed at install (default English). UI, errors, seed, and model prompts follow it:
+     --set lang=en   (default)
+     --set lang=es
+     --set lang=pt

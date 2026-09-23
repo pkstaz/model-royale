@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "model-royale.fullname" . }}-config
+  labels:
+    {{- include "model-royale.labels" . | nindent 4 }}
+data:
+  MOCK_INFERENCE: {{ .Values.api.mockInference | quote }}
+  CORS_ORIGINS: {{ .Values.api.corsOrigins | quote }}
+  JWT_HOURS: {{ .Values.api.jwtHours | quote }}
+  MATCH_PAUSE_SECONDS: {{ .Values.api.matchPauseSeconds | quote }}
+  LLM_TIMEOUT_SECONDS: {{ .Values.api.llmTimeoutSeconds | quote }}
+  APP_LANG: {{ .Values.lang | quote }}
+  # Models are not configured here. The admin pastes InferenceService URLs in /admin.

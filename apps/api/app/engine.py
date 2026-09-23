@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.config import settings
 from app.database import SessionLocal
 from app.hub import hub
+from app.i18n import t
 from app.judge import judge_move
 from app.llm import complete_chat, mock_move
 from app.models import Avatar, Event, Match, Player, Round
@@ -118,22 +119,26 @@ def _messages(event: Event, player: Player, avatar: Avatar, history: list[dict],
         for part in (
             avatar.personality.strip() if avatar.personality else "",
             rules.strip(),
-            f"Matriz de pagos JSON: {payoff}",
-            f"Estrategia del jugador {player.display_name}:\n{player.strategy_prompt or '(sin instrucciones extra)'}",
+            t("payoff_json", payoff=payoff),
+            t(
+                "player_strategy",
+                name=player.display_name,
+                strategy=player.strategy_prompt or t("no_extra_strategy"),
+            ),
         )
         if part
     )
     history_lines = [
-        f"ronda {index + 1}: yo={item['me']} oponente={item['opp']} pts={item['pts_me']}/{item['pts_opp']}"
+        t("history_line", n=index + 1, me=item["me"], opp=item["opp"], pts_me=item["pts_me"], pts_opp=item["pts_opp"])
         for index, item in enumerate(history)
     ]
-    user = "Ronda nueva. Elige A o B."
+    user = t("new_round")
     if extra:
         user += "\n" + extra
     if event.reveal_mode == "history" and history_lines:
-        user += "\nHistorial de este combate:\n" + "\n".join(history_lines)
+        user += "\n" + t("history_header") + "\n" + "\n".join(history_lines)
     elif event.reveal_mode == "blind":
-        user += "\nNo conoces el historial ni la jugada actual del oponente."
+        user += "\n" + t("blind_mode")
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
@@ -224,13 +229,13 @@ async def _run_match(db: Session, match_id: str) -> None:
             if first == "a":
                 raw_a = await _move_for(event, player_a, avatar_a, hist_a, "")
                 move_a, rat_a, inv_a, notes_a = await judge_move(raw_a, judge, event.invalid_move_policy)
-                extra_b = f"El oponente acaba de jugar {move_a} en esta ronda."
+                extra_b = t("opponent_just_played", move=move_a)
                 raw_b = await _move_for(event, player_b, avatar_b, hist_b, extra_b)
                 move_b, rat_b, inv_b, notes_b = await judge_move(raw_b, judge, event.invalid_move_policy)
             else:
                 raw_b = await _move_for(event, player_b, avatar_b, hist_b, "")
                 move_b, rat_b, inv_b, notes_b = await judge_move(raw_b, judge, event.invalid_move_policy)
-                extra_a = f"El oponente acaba de jugar {move_b} en esta ronda."
+                extra_a = t("opponent_just_played", move=move_b)
                 raw_a = await _move_for(event, player_a, avatar_a, hist_a, extra_a)
                 move_a, rat_a, inv_a, notes_a = await judge_move(raw_a, judge, event.invalid_move_policy)
         else:

@@ -35,26 +35,63 @@ npm run dev
 - Admin: http://localhost:5173/admin (password por defecto `admin`)
 - Tablero: http://localhost:5173/tablero/TALLER
 
-Con `MOCK_INFERENCE=true` (default local) no hace falta ningún modelo: el motor simula jugadas a partir de la estrategia escrita.
+Con `MOCK_INFERENCE=true` (default local) no hace falta ningún modelo: el motor simula jugadas a partir de la estrategia escrita. El idioma se fija con `APP_LANG=en` (o `es` / `pt`) en `.env`; no hay selector en la UI.
 
 ```bash
 docker compose up --build
 ```
 
-## OpenShift / GitOps
+## Instalación con Helm (OpenShift)
 
-Los manifiestos viven en `deploy/`. No se aplican hasta que avises que hay cluster.
+Instalación limpia en el proyecto **`model-royale`**: builds, imágenes, Route y el release. No uses `default`. El chart no despliega modelos; en OpenShift la base es SQLite (un PVC en el API).
 
-- App Argo CD: `deploy/argocd/application.yaml`
-- Kustomize: `deploy/k8s/overlays/openshift`
+Requisitos: `oc` autenticado en el cluster, Helm 3, este repo clonado.
 
-En el overlay hay que completar el `repoURL` y, en el Secret, `ADMIN_PASSWORD` y `SECRET_KEY`. Las URLs de los modelos se cargan luego en el mantenedor, no en estos manifiestos.
+```bash
+# 1. Proyecto del juego
+oc new-project model-royale
+oc project model-royale
+
+# 2. Imágenes en ese mismo namespace
+oc new-build --name=api --binary --strategy=docker -n model-royale
+oc start-build api --from-dir=apps/api --follow -n model-royale
+oc new-build --name=web --binary --strategy=docker -n model-royale
+oc start-build web --from-dir=apps/web --follow -n model-royale
+
+# 3. Release (inglés por defecto)
+helm upgrade --install model-royale deploy/helm/model-royale \
+  --namespace model-royale --create-namespace \
+  -f deploy/helm/model-royale/values-openshift.yaml
+```
+
+Para español o portugués (UI, errores, seed y prompts de los modelos), añade `--set lang=es` o `--set lang=pt`. El idioma no se cambia después en la UI.
+
+Clave de admin (si no la fijaste con `--set secrets.adminPassword=…`) y URL:
+
+```bash
+oc get secret model-royale-secret -n model-royale \
+  -o jsonpath='{.data.ADMIN_PASSWORD}' | base64 -d; echo
+
+oc get route model-royale -n model-royale
+```
+
+| Ruta | Uso |
+| --- | --- |
+| `https://<host>/` | Jugador |
+| `https://<host>/admin` | Mantenedor |
+| `https://<host>/tablero/TALLER` | Tablero del evento seed |
+
+Las URLs de InferenceService se pegan en `/admin`, no en el chart.
+
+Para volver a instalar de cero: `oc delete project model-royale`, espera a que desaparezca, y repite los tres pasos.
+
+Chart: `deploy/helm/model-royale`. GitOps opcional: `deploy/argocd/application.yaml` (completa `repoURL`).
 
 ## Stack
 
 | Capa | Tecnología |
 | --- | --- |
-| API | FastAPI, SQLAlchemy, SQLite / Postgres |
+| API | FastAPI, SQLAlchemy, SQLite (OpenShift) / Postgres opcional |
 | Web | React 18, Vite, tema OpenShift + Red Hat |
 | Inferencia | HTTP OpenAI-compatible hacia endpoints externos |
-| GitOps | Argo CD + Kustomize |
+| GitOps | Helm + Argo CD |

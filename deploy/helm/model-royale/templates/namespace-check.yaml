@@ -1,0 +1,8 @@
+{{- if not (has .Values.lang (list "en" "es" "pt")) }}
+{{- fail "lang must be en, es, or pt (default en)" }}
+{{- end }}
+{{- if .Values.openshift.imageRegistry }}
+{{- if ne .Release.Namespace (include "model-royale.imageNamespace" .) }}
+{{- fail (printf "Install into namespace %s with --namespace %s --create-namespace (got %s). Builds, images, and the release all live in the game project — not default." (include "model-royale.imageNamespace" .) (include "model-royale.imageNamespace" .) .Release.Namespace) }}
+{{- end }}
+{{- end }}

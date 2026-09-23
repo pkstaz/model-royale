@@ -9,6 +9,7 @@ services:
       SECRET_KEY: local-dev-key
       MOCK_INFERENCE: "true"
       CORS_ORIGINS: "http://localhost:8080,http://localhost:5173"
+      APP_LANG: "en"
     volumes:
       - api-data:/app/data
   web:

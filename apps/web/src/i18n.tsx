@@ -423,9 +423,17 @@ export const catalogs: Record<Lang, typeof es> = { es, en, pt };
 
 export type MsgKey = keyof typeof es;
 
-function detectLang(): Lang {
-  const stored = localStorage.getItem("mr_lang");
-  if (stored === "es" || stored === "en" || stored === "pt") return stored;
+async function resolveInstallLang(): Promise<Lang> {
+  for (const url of ["/config.json", "/api/public/config"]) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) continue;
+      const body = await response.json();
+      if (body.lang === "es" || body.lang === "en" || body.lang === "pt") return body.lang;
+    } catch {
+      /* try next */
+    }
+  }
   return "en";
 }
 
@@ -436,30 +444,36 @@ function interpolate(template: string, vars?: Record<string, string | number>) {
 
 type Ctx = {
   lang: Lang;
-  setLang: (lang: Lang) => void;
   t: (key: MsgKey, vars?: Record<string, string | number>) => string;
 };
 
 const I18nContext = createContext<Ctx | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(detectLang);
+  const [lang, setLang] = useState<Lang | null>(null);
   useEffect(() => {
-    document.documentElement.lang = lang;
+    let cancelled = false;
+    resolveInstallLang().then((resolved) => {
+      if (!cancelled) setLang(resolved);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  useEffect(() => {
+    if (lang) document.documentElement.lang = lang;
   }, [lang]);
-  const setLang = (next: Lang) => {
-    localStorage.setItem("mr_lang", next);
-    document.documentElement.lang = next;
-    setLangState(next);
-  };
-  const value = useMemo<Ctx>(
-    () => ({
-      lang,
-      setLang,
-      t: (key, vars) => interpolate(catalogs[lang][key], vars),
-    }),
+  const value = useMemo<Ctx | null>(
+    () =>
+      lang
+        ? {
+            lang,
+            t: (key, vars) => interpolate(catalogs[lang][key], vars),
+          }
+        : null,
     [lang],
   );
+  if (!value) return null;
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
@@ -471,39 +485,14 @@ export function useT() {
 
 export function tApiError(message: string, t: Ctx["t"]) {
   const table: [RegExp, MsgKey][] = [
-    [/Evento no encontrado|Event not found/i, "errEventNotFound"],
-    [/inscripción no está abierta|Registration is closed/i, "errRegClosed"],
+    [/Evento no encontrado|Event not found|Evento não encontrado/i, "errEventNotFound"],
+    [/inscripción no está abierta|Registration is not open|Registration is closed|inscrição não está aberta/i, "errRegClosed"],
     [/Cupo completo|Event is full|Vagas/i, "errFull"],
     [/ya está inscrito|already registered|já está inscrito/i, "errNameTaken"],
     [/No hay una inscripción|no registration|Não há inscrição/i, "errNoPlayer"],
     [/no tiene clave|has no password|não tem senha/i, "errNoPassword"],
-    [/Clave incorrecta|Incorrect password|Senha incorreta|Password incorrecto/i, "errBadPassword"],
+    [/Clave incorrecta|Incorrect password|Senha incorreta/i, "errBadPassword"],
   ];
   const hit = table.find(([pattern]) => pattern.test(message));
   return hit ? t(hit[1]) : message;
-}
-
-const LANG_LABEL: Record<Lang, string> = {
-  es: "Español",
-  en: "English",
-  pt: "Português",
-};
-
-export function LangSwitch() {
-  const { lang, setLang } = useT();
-  return (
-    <div className="lang" role="group" aria-label="Language">
-      {(["en", "es", "pt"] as Lang[]).map((item) => (
-        <button
-          key={item}
-          type="button"
-          className={lang === item ? "active" : ""}
-          aria-pressed={lang === item}
-          onClick={() => setLang(item)}
-        >
-          {LANG_LABEL[item]}
-        </button>
-      ))}
-    </div>
-  );
 }

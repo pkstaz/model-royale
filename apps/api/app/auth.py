@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
+from app.i18n import t
 from app.models import Player
 
 
@@ -47,18 +48,18 @@ def issue_admin_jwt() -> str:
 
 def decode_token(authorization: str | None) -> dict:
     if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Falta token")
+        raise HTTPException(status_code=401, detail=t("missing_token"))
     token = authorization.split(" ", 1)[1]
     try:
         return jwt.decode(token, settings.secret_key, algorithms=["HS256"])
     except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=401, detail="Token inválido") from exc
+        raise HTTPException(status_code=401, detail=t("invalid_token")) from exc
 
 
 def require_admin(authorization: str | None = Header(default=None)) -> None:
     payload = decode_token(authorization)
     if payload.get("typ") != "admin":
-        raise HTTPException(status_code=403, detail="Se requiere admin")
+        raise HTTPException(status_code=403, detail=t("admin_required"))
 
 
 def require_player(
@@ -67,8 +68,8 @@ def require_player(
 ) -> Player:
     payload = decode_token(authorization)
     if payload.get("typ") != "player":
-        raise HTTPException(status_code=403, detail="Se requiere jugador")
+        raise HTTPException(status_code=403, detail=t("player_required"))
     player = db.get(Player, payload["sub"])
     if not player:
-        raise HTTPException(status_code=401, detail="Jugador no encontrado")
+        raise HTTPException(status_code=401, detail=t("player_not_found"))
     return player

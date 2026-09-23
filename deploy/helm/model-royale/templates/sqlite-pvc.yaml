@@ -1,0 +1,18 @@
+{{- if and .Values.sqlite.enabled .Values.sqlite.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "model-royale.apiName" . }}-data
+  labels:
+    {{- include "model-royale.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.sqlite.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.sqlite.persistence.size | quote }}
+{{- end }}

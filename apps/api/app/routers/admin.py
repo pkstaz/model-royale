@@ -12,7 +12,8 @@ from app.database import get_db
 from app.engine import publish_snapshot, snapshot
 from app.llm import ping_avatar
 from app.models import Avatar, Event, Player
-from app.schemas import AvatarIn, EventIn, LoginIn, PAYOFF_PRESETS, DEFAULT_RULES
+from app.schemas import AvatarIn, EventIn, LoginIn, PAYOFF_PRESETS
+from app.i18n import t
 from app.serialize import avatar_out, event_out
 from app.tournament import generate_opening
 
@@ -31,7 +32,7 @@ def login(body: LoginIn):
     from app.config import settings
 
     if body.password != settings.admin_password:
-        raise HTTPException(status_code=401, detail="Password incorrecto")
+        raise HTTPException(status_code=401, detail=t("bad_admin_password"))
     return {"token": issue_admin_jwt()}
 
 
@@ -45,7 +46,7 @@ def list_avatars(db: Session = Depends(get_db)):
 def create_avatar(body: AvatarIn, db: Session = Depends(get_db)):
     slug = _slugify(body.slug or body.name)
     if db.query(Avatar).filter(Avatar.slug == slug).first():
-        raise HTTPException(status_code=409, detail="Slug ya existe")
+        raise HTTPException(status_code=409, detail=t("slug_exists"))
     avatar = Avatar(
         name=body.name,
         slug=slug,
@@ -70,7 +71,7 @@ def create_avatar(body: AvatarIn, db: Session = Depends(get_db)):
 def update_avatar(avatar_id: str, body: AvatarIn, db: Session = Depends(get_db)):
     avatar = db.get(Avatar, avatar_id)
     if not avatar:
-        raise HTTPException(status_code=404, detail="Avatar no encontrado")
+        raise HTTPException(status_code=404, detail=t("avatar_not_found"))
     avatar.name = body.name
     avatar.slug = _slugify(body.slug or body.name)
     avatar.description = body.description
@@ -95,7 +96,7 @@ def update_avatar(avatar_id: str, body: AvatarIn, db: Session = Depends(get_db))
 def delete_avatar(avatar_id: str, db: Session = Depends(get_db)):
     avatar = db.get(Avatar, avatar_id)
     if not avatar:
-        raise HTTPException(status_code=404, detail="Avatar no encontrado")
+        raise HTTPException(status_code=404, detail=t("avatar_not_found"))
     in_use = db.query(Player).filter(Player.avatar_id == avatar_id).count()
     if in_use:
         avatar.enabled = False
@@ -110,7 +111,7 @@ def delete_avatar(avatar_id: str, db: Session = Depends(get_db)):
 async def ping(avatar_id: str, db: Session = Depends(get_db)):
     avatar = db.get(Avatar, avatar_id)
     if not avatar:
-        raise HTTPException(status_code=404, detail="Avatar no encontrado")
+        raise HTTPException(status_code=404, detail=t("avatar_not_found"))
     return await ping_avatar(avatar)
 
 
@@ -138,7 +139,7 @@ def create_event(body: EventIn, db: Session = Depends(get_db)):
         advance_per_group=body.advance_per_group,
         reveal_mode=body.reveal_mode,
         payoff_json=json.dumps(payoff),
-        rules_prompt=body.rules_prompt or DEFAULT_RULES,
+        rules_prompt=body.rules_prompt or t("default_rules"),
         judge_avatar_id=body.judge_avatar_id,
         invalid_move_policy=body.invalid_move_policy,
         auto_advance=body.auto_advance,
@@ -154,9 +155,9 @@ def create_event(body: EventIn, db: Session = Depends(get_db)):
 def update_event(event_id: str, body: EventIn, db: Session = Depends(get_db)):
     event = db.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        raise HTTPException(status_code=404, detail=t("event_not_found"))
     if event.status == "running":
-        raise HTTPException(status_code=409, detail="No se edita un evento en curso")
+        raise HTTPException(status_code=409, detail=t("event_locked"))
     payoff = body.payoff or PAYOFF_PRESETS.get(body.payoff_preset or "royale", PAYOFF_PRESETS["royale"])
     event.name = body.name
     event.format = body.format
@@ -180,9 +181,9 @@ def update_event(event_id: str, body: EventIn, db: Session = Depends(get_db)):
 async def open_registration(event_id: str, db: Session = Depends(get_db)):
     event = db.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        raise HTTPException(status_code=404, detail=t("event_not_found"))
     if event.status not in {"draft", "registration"}:
-        raise HTTPException(status_code=409, detail="Ya no se puede abrir inscripción")
+        raise HTTPException(status_code=409, detail=t("cannot_open_reg"))
     event.status = "registration"
     db.commit()
     await publish_snapshot(event.id)
@@ -193,13 +194,13 @@ async def open_registration(event_id: str, db: Session = Depends(get_db)):
 async def start_event(event_id: str, db: Session = Depends(get_db)):
     event = db.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        raise HTTPException(status_code=404, detail=t("event_not_found"))
     players = db.query(Player).filter(Player.event_id == event.id).all()
     if len(players) < event.min_players:
-        raise HTTPException(status_code=409, detail="Faltan jugadores")
+        raise HTTPException(status_code=409, detail=t("not_enough_players"))
     unset = [item for item in players if not item.avatar_id]
     if unset:
-        raise HTTPException(status_code=409, detail="Hay jugadores sin avatar")
+        raise HTTPException(status_code=409, detail=t("players_without_avatar"))
     event.status = "running"
     for index, player in enumerate(players, start=1):
         player.seed = index
@@ -216,7 +217,7 @@ async def reset_event(event_id: str, db: Session = Depends(get_db)):
 
     event = db.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        raise HTTPException(status_code=404, detail=t("event_not_found"))
     matches = db.query(Match).filter(Match.event_id == event.id).all()
     for match in matches:
         db.query(Round).filter(Round.match_id == match.id).delete()
@@ -234,5 +235,5 @@ async def reset_event(event_id: str, db: Session = Depends(get_db)):
 def live(event_id: str, db: Session = Depends(get_db)):
     event = db.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=404, detail="Evento no encontrado")
+        raise HTTPException(status_code=404, detail=t("event_not_found"))
     return snapshot(db, event)

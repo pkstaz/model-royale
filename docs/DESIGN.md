@@ -82,9 +82,9 @@ Un **combate** = N rondas (3 o 5, o las que ponga el admin) entre dos jugadores.
 
 ## Runtime
 
-- API FastAPI + SQLAlchemy (SQLite local, Postgres en cluster).
+- API FastAPI + SQLAlchemy (SQLite local y en OpenShift; Postgres opcional fuera de OpenShift).
 - Web React (Vite), tema oscuro tipo consola OpenShift + paleta Red Hat.
 - Inferencia: cliente HTTP compatible con OpenAI (`/v1/chat/completions`) contra la URL del avatar.
 - Si el avatar no tiene URL, o `MOCK_INFERENCE=true`, el motor usa un jugador sintético que **sí respeta palabras clave de la estrategia** (`siempre A`, `siempre B`, `tit for tat`, `grim`, etc.). Así el taller funciona antes de tener InferenceServices.
 
-Cuando tengas cluster, el mismo manifiesto de ArgoCD publica el juego. Los modelos siguen en su propio GitOps.
+Cuando tengas cluster, Helm (o Argo CD apuntando al chart) publica el juego. Los modelos siguen en su propio GitOps.
