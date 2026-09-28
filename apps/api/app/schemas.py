@@ -16,14 +16,21 @@ class AvatarIn(BaseModel):
     slug: str | None = None
     description: str = ""
     color: str = "#EE0000"
-    provider: str = "openshift-ai"
+    provider: str = "maas"
     base_url: str = ""
     model_id: str = ""
     api_key: str | None = None
-    temperature: float = 0.4
+    use_global_endpoint: bool = True
+    use_global_api_key: bool = True
+    temperature: float | None = Field(default=None, ge=0, le=2)
     max_tokens: int = 220
     personality: str = ""
     enabled: bool = True
+
+
+class SettingsIn(BaseModel):
+    default_base_url: str = ""
+    default_api_key: str | None = None
 
 
 class AvatarOut(BaseModel):
@@ -45,7 +52,7 @@ class AvatarOut(BaseModel):
 
 class EventIn(BaseModel):
     name: str
-    code: str | None = None
+    code: str | None = Field(default=None, max_length=24)
     format: str = "elimination"
     rounds_per_match: int = Field(default=5, ge=1, le=21)
     max_players: int = Field(default=16, ge=2, le=128)
@@ -76,7 +83,12 @@ class PlayerLoginIn(BaseModel):
 class StrategyIn(BaseModel):
     avatar_id: str | None = None
     strategy_prompt: str | None = None
+    temperature: float | None = Field(default=None, ge=0, le=2)
 
 
 class LoginIn(BaseModel):
     password: str
+
+
+class StartIn(BaseModel):
+    auto_advance: bool = True

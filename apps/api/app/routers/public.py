@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.connection import inference_config
 from app.database import get_db
 from app.engine import snapshot
 from app.hub import hub
@@ -27,9 +28,10 @@ def get_event(code: str, db: Session = Depends(get_db)):
     if not event:
         raise HTTPException(status_code=404, detail=t("event_not_found"))
     avatars = db.query(Avatar).filter(Avatar.enabled.is_(True)).order_by(Avatar.name.asc()).all()
+    cfg = inference_config(db)
     return {
         "event": event_out(event),
-        "avatars": [avatar_out(item, public=True) for item in avatars],
+        "avatars": [avatar_out(item, public=True, cfg=cfg) for item in avatars],
         "live": snapshot(db, event),
     }
 

@@ -25,6 +25,8 @@ class Avatar(Base):
     base_url: Mapped[str] = mapped_column(String(400), default="")
     model_id: Mapped[str] = mapped_column(String(200), default="")
     api_key: Mapped[str] = mapped_column(String(400), default="")
+    use_global_endpoint: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    use_global_api_key: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
     temperature: Mapped[float] = mapped_column(Float, default=0.4)
     max_tokens: Mapped[int] = mapped_column(Integer, default=220)
     personality: Mapped[str] = mapped_column(Text, default="")
@@ -32,12 +34,21 @@ class Avatar(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class AppSettings(Base):
+    __tablename__ = "app_settings"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default="default")
+    default_base_url: Mapped[str] = mapped_column(String(400), default="")
+    default_api_key: Mapped[str] = mapped_column(String(400), default="")
+    seed_lang: Mapped[str] = mapped_column(String(8), default="")
+
+
 class Event(Base):
     __tablename__ = "events"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
     name: Mapped[str] = mapped_column(String(120))
-    code: Mapped[str] = mapped_column(String(16), unique=True)
+    code: Mapped[str] = mapped_column(String(24), unique=True)
     status: Mapped[str] = mapped_column(String(24), default="draft")
     format: Mapped[str] = mapped_column(String(24), default="elimination")
     rounds_per_match: Mapped[int] = mapped_column(Integer, default=5)
@@ -66,6 +77,7 @@ class Player(Base):
     display_name: Mapped[str] = mapped_column(String(80))
     avatar_id: Mapped[str | None] = mapped_column(ForeignKey("avatars.id"), nullable=True)
     strategy_prompt: Mapped[str] = mapped_column(Text, default="")
+    temperature: Mapped[float] = mapped_column(Float, default=0.4)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     password_hash: Mapped[str] = mapped_column(String(64), default="")
     seed: Mapped[int] = mapped_column(Integer, default=0)
@@ -83,7 +95,7 @@ class Match(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=uid)
     event_id: Mapped[str] = mapped_column(ForeignKey("events.id"))
     stage: Mapped[str] = mapped_column(String(32), default="league")
-    wave: Mapped[int] = mapped_column(Integer, default=0)
+    wave: Mapped[int] = mapped_column(Integer, default=1)
     group_label: Mapped[str | None] = mapped_column(String(8), nullable=True)
     bracket_slot: Mapped[int] = mapped_column(Integer, default=0)
     player_a_id: Mapped[str | None] = mapped_column(ForeignKey("players.id"), nullable=True)

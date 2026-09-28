@@ -26,9 +26,24 @@ def get_db():
 
 def migrate_schema() -> None:
     inspector = inspect(engine)
-    if "players" not in inspector.get_table_names():
+    tables = inspector.get_table_names()
+    if "app_settings" in tables:
+        setting_cols = {item["name"] for item in inspector.get_columns("app_settings")}
+        if "seed_lang" not in setting_cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE app_settings ADD COLUMN seed_lang VARCHAR(8) DEFAULT ''"))
+    if "avatars" in tables:
+        avatar_cols = {item["name"] for item in inspector.get_columns("avatars")}
+        with engine.begin() as conn:
+            if "use_global_endpoint" not in avatar_cols:
+                conn.execute(text("ALTER TABLE avatars ADD COLUMN use_global_endpoint BOOLEAN DEFAULT 1"))
+            if "use_global_api_key" not in avatar_cols:
+                conn.execute(text("ALTER TABLE avatars ADD COLUMN use_global_api_key BOOLEAN DEFAULT 1"))
+    if "players" not in tables:
         return
     columns = {item["name"] for item in inspector.get_columns("players")}
-    if "password_hash" not in columns:
-        with engine.begin() as conn:
+    with engine.begin() as conn:
+        if "password_hash" not in columns:
             conn.execute(text("ALTER TABLE players ADD COLUMN password_hash VARCHAR(64) DEFAULT ''"))
+        if "temperature" not in columns:
+            conn.execute(text("ALTER TABLE players ADD COLUMN temperature FLOAT DEFAULT 0.4"))

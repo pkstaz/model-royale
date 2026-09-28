@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { api, storage } from "../api";
 import { useT } from "../i18n";
@@ -7,6 +7,8 @@ import { Masthead } from "../ui";
 export default function AdminLayout() {
   const { t } = useT();
   const navigate = useNavigate();
+  const location = useLocation();
+  const boardActive = location.pathname.startsWith("/admin/tablero");
 
   useEffect(() => {
     const token = storage.adminToken();
@@ -30,8 +32,13 @@ export default function AdminLayout() {
       <Masthead
         right={
           <nav>
-            <NavLink to="/admin">{t("events")}</NavLink>
+            <NavLink to="/admin" end>
+              {t("events")}
+            </NavLink>
             <NavLink to="/admin/avatares">{t("avatars")}</NavLink>
+            <NavLink to="/admin/tablero/TALLER" className={boardActive ? "active" : undefined}>
+              {t("publicBoard")}
+            </NavLink>
             <button className="btn-link" type="button" onClick={logout}>
               {t("exit")}
             </button>
@@ -44,7 +51,9 @@ export default function AdminLayout() {
             {t("events")}
           </NavLink>
           <NavLink to="/admin/avatares">{t("avatars")}</NavLink>
-          <NavLink to="/tablero/TALLER">{t("publicBoard")}</NavLink>
+          <NavLink to="/admin/tablero/TALLER" className={boardActive ? "active" : undefined}>
+            {t("publicBoard")}
+          </NavLink>
         </aside>
         <div className="main">
           <Outlet />

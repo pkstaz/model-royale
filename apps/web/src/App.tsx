@@ -6,6 +6,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminLayout from "./pages/AdminLayout";
 import AdminEvents from "./pages/AdminEvents";
 import AdminAvatars from "./pages/AdminAvatars";
+import AdminBoard from "./pages/AdminBoard";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminEvents />} />
         <Route path="avatares" element={<AdminAvatars />} />
+        <Route path="tablero/:code" element={<AdminBoard />} />
       </Route>
     </Routes>
   );

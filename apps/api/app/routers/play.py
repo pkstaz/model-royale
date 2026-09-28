@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.auth import hash_password, hash_token, issue_player_jwt, require_player, verify_password
+from app.connection import inference_config, resolved_base_url
 from app.database import get_db
 from app.engine import publish_snapshot, snapshot
 from app.i18n import t
@@ -86,6 +87,7 @@ def login(body: PlayerLoginIn, db: Session = Depends(get_db)):
 def me(player: Player = Depends(require_player), db: Session = Depends(get_db)):
     event = db.get(Event, player.event_id)
     avatars = db.query(Avatar).filter(Avatar.enabled.is_(True)).order_by(Avatar.name.asc()).all()
+    cfg = inference_config(db)
     live = snapshot(db, event) if event else None
     mine = []
     if live:
@@ -110,7 +112,7 @@ def me(player: Player = Depends(require_player), db: Session = Depends(get_db)):
                 "description": item.description,
                 "color": item.color,
                 "personality": item.personality,
-                "reachable": bool(item.base_url and item.model_id),
+                "reachable": bool(resolved_base_url(item, cfg) and item.model_id),
             }
             for item in avatars
         ],
@@ -135,6 +137,8 @@ async def update_me(
         player.avatar_id = avatar.id
     if body.strategy_prompt is not None:
         player.strategy_prompt = body.strategy_prompt[:8000]
+    if body.temperature is not None:
+        player.temperature = body.temperature
     db.commit()
     db.refresh(player)
     await publish_snapshot(player.event_id)

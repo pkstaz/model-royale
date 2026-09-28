@@ -10,24 +10,32 @@ EN = {
     "default_rules": (
         "You are an avatar in Model Royale. Each round you choose exactly one action: A or B.\n\n"
         "The payoff matrix for this event is shown below. Reply only with JSON:\n"
-        '{"move": "A" or "B", "rationale": "one sentence"}\n\n'
+        '{"move": "A" or "B", "rationale": "max 12 words"}\n\n'
         "Do not use markdown. Do not explain outside the JSON."
     ),
     "seed_event_name": "Model Royale Workshop",
-    "avatar_granite_desc": "Red Hat / IBM Granite avatar. Paste the OpenShift AI endpoint here.",
-    "avatar_granite_personality": "You are Granite: direct, sober, you favor consistency over bluffing.",
-    "avatar_llama_desc": "Meta Llama served in the cluster. Fill in URL and model id.",
-    "avatar_llama_personality": "You are Llama: you explore, adapt, and do not lock onto a single tactic.",
-    "avatar_mistral_desc": "Mistral / Mixtral on OpenShift AI.",
-    "avatar_mistral_personality": "You are Mistral: compact, tactical, you chase expected payoff.",
-    "avatar_glm_desc": "GLM. The model lives outside this game.",
-    "avatar_glm_personality": "You are GLM: analytical, you explain little and play with discipline.",
-    "avatar_kimi_desc": "Kimi. Configure the predictor when it exists.",
-    "avatar_kimi_personality": "You are Kimi: you watch the history and adjust round by round.",
+    "avatar_redrock_desc": "Granite 3.2 8B instruct. Red Hat's rock on the workshop MaaS.",
+    "avatar_redrock_personality": "You are Redrock (Granite 3.2 8B): direct, sober, you favor consistency over bluffing.",
+    "avatar_slate_desc": "Phi-4. Compact dense model, slate-gray precision.",
+    "avatar_slate_personality": "You are Slate (Phi-4): compact, precise, you write little and play tight.",
+    "avatar_nexus_desc": "Qwen 3 14B. Generalist hub that connects tactics.",
+    "avatar_nexus_personality": "You are Nexus (Qwen 3 14B): you connect threads, adapt, and switch tactics when the history says so.",
+    "avatar_trail_desc": "Llama Scout 17B. Explorer that marks the path.",
+    "avatar_trail_personality": "You are Trail (Llama Scout): you scout the history and adjust round by round; you explore but you mark the path.",
+    "avatar_forge_desc": "gpt-oss-20b. Open-weight forge — 20B, not 120B.",
+    "avatar_forge_personality": "You are Forge (gpt-oss-20b): you hit harder, you forge a plan and you commit; still you read the opponent.",
     "payoff_json": "Payoff matrix JSON: {payoff}",
     "player_strategy": "Strategy from player {name}:\n{strategy}",
     "no_extra_strategy": "(no extra instructions)",
     "new_round": "New round. Choose A or B.",
+    "overtime_round": (
+        "The match is tied. Choose A or B. Same moves still assign a random extra: "
+        "AA gives -3 to one player, BB gives +2 to one player."
+    ),
+    "same_move_rule": (
+        "If both play A, one random player gets -3 extra. If both play B, one random player gets +2 extra."
+    ),
+    "same_move_split": "Both {move}: {delta:+d} to {name}",
     "history_header": "History of this match:",
     "history_line": "round {n}: me={me} opp={opp} pts={pts_me}/{pts_opp}",
     "blind_mode": "You do not know the history or the opponent's current move.",
@@ -56,7 +64,11 @@ EN = {
     "avatar_not_found": "Avatar not found",
     "event_not_found": "Event not found",
     "event_locked": "A running event cannot be edited",
+    "code_taken": "That event code is already in use",
     "cannot_open_reg": "Registration can no longer be opened",
+    "cannot_start": "The event already started",
+    "cannot_next_round": "Start the event before launching a round",
+    "round_in_progress": "This round is still running",
     "not_enough_players": "Not enough players",
     "players_without_avatar": "Some players have no avatar",
     "reg_closed": "Registration is not open. If you already signed up, use Log in.",
@@ -74,24 +86,32 @@ ES = {
     "default_rules": (
         "Eres un avatar en Model Royale. En cada ronda eliges exactamente una acción: A o B.\n\n"
         "La matriz de pagos de este evento se indica más abajo. Responde únicamente con JSON:\n"
-        '{"move": "A" o "B", "rationale": "una frase"}\n\n'
+        '{"move": "A" o "B", "rationale": "máximo 12 palabras"}\n\n'
         "No uses markdown. No expliques fuera del JSON."
     ),
     "seed_event_name": "Taller Model Royale",
-    "avatar_granite_desc": "Avatar Red Hat / IBM Granite. Pega aquí el endpoint de OpenShift AI.",
-    "avatar_granite_personality": "Eres Granite: directo, sobrio, priorizas consistencia sobre faroleo.",
-    "avatar_llama_desc": "Meta Llama servido en el cluster. Completa URL y model id.",
-    "avatar_llama_personality": "Eres Llama: exploras, adaptas y no te cascas en una sola táctica.",
-    "avatar_mistral_desc": "Mistral / Mixtral en OpenShift AI.",
-    "avatar_mistral_personality": "Eres Mistral: compacto, táctico, buscas el pago esperado.",
-    "avatar_glm_desc": "GLM. El modelo vive fuera de este juego.",
-    "avatar_glm_personality": "Eres GLM: analítico, explicas poco y juegas con disciplina.",
-    "avatar_kimi_desc": "Kimi. Configura el predictor cuando exista.",
-    "avatar_kimi_personality": "Eres Kimi: observas el historial y ajustas ronda a ronda.",
+    "avatar_redrock_desc": "Granite 3.2 8B instruct. La roca de Red Hat en el MaaS del taller.",
+    "avatar_redrock_personality": "Eres Redrock (Granite 3.2 8B): directo, sobrio, priorizas consistencia sobre faroleo.",
+    "avatar_slate_desc": "Phi-4. Modelo denso y compacto, precisión de pizarra.",
+    "avatar_slate_personality": "Eres Slate (Phi-4): compacto, preciso, escribes poco y juegas apretado.",
+    "avatar_nexus_desc": "Qwen 3 14B. Hub generalista que conecta tácticas.",
+    "avatar_nexus_personality": "Eres Nexus (Qwen 3 14B): conectas hilos, adaptas y cambias de táctica cuando el historial lo pide.",
+    "avatar_trail_desc": "Llama Scout 17B. Explorador que marca el camino.",
+    "avatar_trail_personality": "Eres Trail (Llama Scout): recorres el historial y ajustas ronda a ronda; exploras, pero marcas el sendero.",
+    "avatar_forge_desc": "gpt-oss-20b. Forja de pesos abiertos — 20B, no 120B.",
+    "avatar_forge_personality": "Eres Forge (gpt-oss-20b): golpeas más duro, forjas un plan y te comprometes; igual lees al oponente.",
     "payoff_json": "Matriz de pagos JSON: {payoff}",
     "player_strategy": "Estrategia del jugador {name}:\n{strategy}",
     "no_extra_strategy": "(sin instrucciones extra)",
     "new_round": "Ronda nueva. Elige A o B.",
+    "overtime_round": (
+        "El combate está empatado. Elige A o B. Si ambos juegan lo mismo, igual hay un extra al azar: "
+        "AA da -3 a un jugador, BB da +2 a un jugador."
+    ),
+    "same_move_rule": (
+        "Si ambos juegan A, un jugador al azar recibe -3 extra. Si ambos juegan B, un jugador al azar recibe +2 extra."
+    ),
+    "same_move_split": "Ambos {move}: {delta:+d} a {name}",
     "history_header": "Historial de este combate:",
     "blind_mode": "No conoces el historial ni la jugada actual del oponente.",
     "opponent_just_played": "El oponente acaba de jugar {move} en esta ronda.",
@@ -119,7 +139,11 @@ ES = {
     "avatar_not_found": "Avatar no encontrado",
     "event_not_found": "Evento no encontrado",
     "event_locked": "No se edita un evento en curso",
+    "code_taken": "Ese código de evento ya está en uso",
     "cannot_open_reg": "Ya no se puede abrir inscripción",
+    "cannot_start": "El evento ya partió",
+    "cannot_next_round": "Inicia el evento antes de lanzar una ronda",
+    "round_in_progress": "Esta ronda todavía está en curso",
     "not_enough_players": "Faltan jugadores",
     "players_without_avatar": "Hay jugadores sin avatar",
     "reg_closed": "La inscripción no está abierta. Si ya te inscribiste, usa Entrar.",
@@ -137,24 +161,32 @@ PT = {
     "default_rules": (
         "Você é um avatar em Model Royale. Em cada rodada você escolhe exatamente uma ação: A ou B.\n\n"
         "A matriz de pagamentos deste evento aparece abaixo. Responda somente com JSON:\n"
-        '{"move": "A" ou "B", "rationale": "uma frase"}\n\n'
+        '{"move": "A" ou "B", "rationale": "no máximo 12 palavras"}\n\n'
         "Não use markdown. Não explique fora do JSON."
     ),
     "seed_event_name": "Oficina Model Royale",
-    "avatar_granite_desc": "Avatar Red Hat / IBM Granite. Cole aqui o endpoint do OpenShift AI.",
-    "avatar_granite_personality": "Você é Granite: direto, sóbrio, prioriza consistência em vez de blefe.",
-    "avatar_llama_desc": "Meta Llama servido no cluster. Preencha URL e model id.",
-    "avatar_llama_personality": "Você é Llama: explora, adapta e não se prende a uma só tática.",
-    "avatar_mistral_desc": "Mistral / Mixtral no OpenShift AI.",
-    "avatar_mistral_personality": "Você é Mistral: compacto, tático, busca o pagamento esperado.",
-    "avatar_glm_desc": "GLM. O modelo vive fora deste jogo.",
-    "avatar_glm_personality": "Você é GLM: analítico, explica pouco e joga com disciplina.",
-    "avatar_kimi_desc": "Kimi. Configure o predictor quando existir.",
-    "avatar_kimi_personality": "Você é Kimi: observa o histórico e ajusta a cada rodada.",
+    "avatar_redrock_desc": "Granite 3.2 8B instruct. A rocha da Red Hat no MaaS da oficina.",
+    "avatar_redrock_personality": "Você é Redrock (Granite 3.2 8B): direto, sóbrio, prioriza consistência em vez de blefe.",
+    "avatar_slate_desc": "Phi-4. Modelo denso e compacto, precisão de ardósia.",
+    "avatar_slate_personality": "Você é Slate (Phi-4): compacto, preciso, escreve pouco e joga apertado.",
+    "avatar_nexus_desc": "Qwen 3 14B. Hub generalista que conecta táticas.",
+    "avatar_nexus_personality": "Você é Nexus (Qwen 3 14B): conecta fios, adapta e muda de tática quando o histórico pede.",
+    "avatar_trail_desc": "Llama Scout 17B. Explorador que marca o caminho.",
+    "avatar_trail_personality": "Você é Trail (Llama Scout): percorre o histórico e ajusta a cada rodada; explora, mas marca a trilha.",
+    "avatar_forge_desc": "gpt-oss-20b. Forja de pesos abertos — 20B, não 120B.",
+    "avatar_forge_personality": "Você é Forge (gpt-oss-20b): golpeia mais forte, forja um plano e se compromete; ainda assim lê o oponente.",
     "payoff_json": "Matriz de pagamentos JSON: {payoff}",
     "player_strategy": "Estratégia do jogador {name}:\n{strategy}",
     "no_extra_strategy": "(sem instruções extras)",
     "new_round": "Nova rodada. Escolha A ou B.",
+    "overtime_round": (
+        "O combate está empatado. Escolha A ou B. Se ambos jogarem a mesma ação, ainda há um extra aleatório: "
+        "AA dá -3 a um jogador, BB dá +2 a um jogador."
+    ),
+    "same_move_rule": (
+        "Se ambos jogarem A, um jogador aleatório recebe -3 extra. Se ambos jogarem B, um jogador aleatório recebe +2 extra."
+    ),
+    "same_move_split": "Ambos {move}: {delta:+d} para {name}",
     "history_header": "Histórico deste combate:",
     "blind_mode": "Você não conhece o histórico nem a jogada atual do oponente.",
     "opponent_just_played": "O oponente acabou de jogar {move} nesta rodada.",
@@ -182,7 +214,11 @@ PT = {
     "avatar_not_found": "Avatar não encontrado",
     "event_not_found": "Evento não encontrado",
     "event_locked": "Não se edita um evento em andamento",
+    "code_taken": "Esse código de evento já está em uso",
     "cannot_open_reg": "Já não é possível abrir inscrição",
+    "cannot_start": "O evento já começou",
+    "cannot_next_round": "Inicie o evento antes de lançar uma rodada",
+    "round_in_progress": "Esta rodada ainda está em andamento",
     "not_enough_players": "Faltam jogadores",
     "players_without_avatar": "Há jogadores sem avatar",
     "reg_closed": "A inscrição não está aberta. Se você já se inscreveu, use Entrar.",
@@ -216,38 +252,43 @@ def t(key: str, **vars: object) -> str:
 def starter_avatars() -> list[dict]:
     return [
         {
-            "name": "Granite",
-            "slug": "granite",
-            "description": t("avatar_granite_desc"),
+            "name": "Redrock",
+            "slug": "redrock",
+            "model_id": "granite-3-2-8b-instruct",
+            "description": t("avatar_redrock_desc"),
             "color": "#EE0000",
-            "personality": t("avatar_granite_personality"),
+            "personality": t("avatar_redrock_personality"),
         },
         {
-            "name": "Llama",
-            "slug": "llama",
-            "description": t("avatar_llama_desc"),
+            "name": "Slate",
+            "slug": "slate",
+            "model_id": "microsoft-phi-4",
+            "description": t("avatar_slate_desc"),
+            "color": "#8A8D90",
+            "personality": t("avatar_slate_personality"),
+        },
+        {
+            "name": "Nexus",
+            "slug": "nexus",
+            "model_id": "qwen3-14b",
+            "description": t("avatar_nexus_desc"),
+            "color": "#73BCF7",
+            "personality": t("avatar_nexus_personality"),
+        },
+        {
+            "name": "Trail",
+            "slug": "trail",
+            "model_id": "llama-scout-17b",
+            "description": t("avatar_trail_desc"),
             "color": "#F0AB00",
-            "personality": t("avatar_llama_personality"),
+            "personality": t("avatar_trail_personality"),
         },
         {
-            "name": "Mistral",
-            "slug": "mistral",
-            "description": t("avatar_mistral_desc"),
-            "color": "#73C5C5",
-            "personality": t("avatar_mistral_personality"),
-        },
-        {
-            "name": "GLM",
-            "slug": "glm",
-            "description": t("avatar_glm_desc"),
-            "color": "#7CC674",
-            "personality": t("avatar_glm_personality"),
-        },
-        {
-            "name": "Kimi",
-            "slug": "kimi",
-            "description": t("avatar_kimi_desc"),
-            "color": "#A18FFF",
-            "personality": t("avatar_kimi_personality"),
+            "name": "Forge",
+            "slug": "forge",
+            "model_id": "gpt-oss-20b",
+            "description": t("avatar_forge_desc"),
+            "color": "#EC7A08",
+            "personality": t("avatar_forge_personality"),
         },
     ]

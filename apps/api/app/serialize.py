@@ -1,7 +1,21 @@
+from app.connection import InferenceConfig, inference_config, resolved_api_key, resolved_base_url
 from app.models import Avatar, Event, Match, Player, Round
+from app.schemas import PAYOFF_PRESETS
+from app.tournament import display_wave
 
 
-def avatar_out(avatar: Avatar, public: bool = False) -> dict:
+def avatar_out(avatar: Avatar, public: bool = False, cfg: InferenceConfig | None = None) -> dict:
+    settings_row = cfg
+    if settings_row is None:
+        from app.database import SessionLocal
+
+        db = SessionLocal()
+        try:
+            settings_row = inference_config(db)
+        finally:
+            db.close()
+    base = resolved_base_url(avatar, settings_row)
+    key = resolved_api_key(avatar, settings_row)
     data = {
         "id": avatar.id,
         "name": avatar.name,
@@ -11,12 +25,16 @@ def avatar_out(avatar: Avatar, public: bool = False) -> dict:
         "provider": avatar.provider,
         "base_url": "" if public else avatar.base_url,
         "model_id": avatar.model_id,
+        "use_global_endpoint": avatar.use_global_endpoint,
+        "use_global_api_key": avatar.use_global_api_key,
         "has_api_key": False if public else bool(avatar.api_key),
+        "has_resolved_api_key": False if public else bool(key),
+        "resolved_base_url": "" if public else base,
         "temperature": avatar.temperature,
         "max_tokens": avatar.max_tokens,
         "personality": avatar.personality,
         "enabled": avatar.enabled,
-        "reachable": bool(avatar.base_url and avatar.model_id),
+        "reachable": bool(base and avatar.model_id),
     }
     return data
 
@@ -29,6 +47,7 @@ def player_out(player: Player, locked: bool = False) -> dict:
         "avatar_id": player.avatar_id,
         "avatar": avatar_out(player.avatar, public=True) if player.avatar else None,
         "strategy_prompt": player.strategy_prompt,
+        "temperature": player.temperature,
         "group_label": player.group_label,
         "eliminated": player.eliminated,
         "seed": player.seed,
@@ -37,7 +56,7 @@ def player_out(player: Player, locked: bool = False) -> dict:
     }
 
 
-def round_out(round_: Round) -> dict:
+def round_out(round_: Round, scheduled: int | None = None) -> dict:
     return {
         "id": round_.id,
         "index": round_.index,
@@ -50,10 +69,11 @@ def round_out(round_: Round) -> dict:
         "judge_notes": round_.judge_notes,
         "invalid_a": round_.invalid_a,
         "invalid_b": round_.invalid_b,
+        "overtime": bool(scheduled is not None and round_.index > scheduled),
     }
 
 
-def match_out(match: Match, players: dict[str, Player] | None = None) -> dict:
+def match_out(match: Match, players: dict[str, Player] | None = None, scheduled_rounds: int | None = None) -> dict:
     def name_of(pid: str | None) -> str | None:
         if not pid:
             return None
@@ -64,7 +84,7 @@ def match_out(match: Match, players: dict[str, Player] | None = None) -> dict:
     return {
         "id": match.id,
         "stage": match.stage,
-        "wave": match.wave,
+        "wave": display_wave(match.wave),
         "group_label": match.group_label,
         "bracket_slot": match.bracket_slot,
         "player_a_id": match.player_a_id,
@@ -75,7 +95,7 @@ def match_out(match: Match, players: dict[str, Player] | None = None) -> dict:
         "winner_id": match.winner_id,
         "score_a": match.score_a,
         "score_b": match.score_b,
-        "rounds": [round_out(item) for item in (match.rounds or [])],
+        "rounds": [round_out(item, scheduled_rounds) for item in (match.rounds or [])],
     }
 
 
@@ -99,6 +119,7 @@ def event_out(event: Event) -> dict:
         "advance_per_group": event.advance_per_group,
         "reveal_mode": event.reveal_mode,
         "payoff": payoff,
+        "payoff_preset": next((key for key, matrix in PAYOFF_PRESETS.items() if matrix == payoff), "royale"),
         "rules_prompt": event.rules_prompt,
         "judge_avatar_id": event.judge_avatar_id,
         "invalid_move_policy": event.invalid_move_policy,

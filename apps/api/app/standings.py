@@ -57,7 +57,7 @@ def standings_for_event(db: Session, event: Event) -> list[dict]:
         if player_id in stats:
             stats[player_id]["invalids"] = count
     rows = list(stats.values())
-    rows.sort(key=lambda row: (-row["points"], -row["wins"], row["invalids"], row["seed"]))
+    rows.sort(key=lambda row: (-row["points"], -row["wins"], row["invalids"], row["seed"], row["player_id"]))
     for index, row in enumerate(rows, start=1):
         row["rank"] = index
     return rows

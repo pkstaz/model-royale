@@ -7,12 +7,21 @@ export type Avatar = {
   provider: string;
   base_url: string;
   model_id: string;
-  has_api_key: boolean;
+  use_global_endpoint?: boolean;
+  use_global_api_key?: boolean;
+  has_api_key?: boolean;
+  has_resolved_api_key?: boolean;
+  resolved_base_url?: string;
   temperature: number;
   max_tokens: number;
   personality: string;
   enabled: boolean;
   reachable: boolean;
+};
+
+export type InferenceSettings = {
+  default_base_url: string;
+  has_api_key: boolean;
 };
 
 export type EventInfo = {
@@ -28,6 +37,7 @@ export type EventInfo = {
   advance_per_group: number;
   reveal_mode: string;
   payoff: Record<string, number[]>;
+  payoff_preset?: string;
   rules_prompt: string;
   judge_avatar_id?: string | null;
   invalid_move_policy: string;
@@ -41,6 +51,7 @@ export type Player = {
   avatar_id?: string | null;
   avatar?: Avatar | null;
   strategy_prompt: string;
+  temperature?: number;
   group_label?: string | null;
   eliminated: boolean;
   seed: number;
@@ -59,6 +70,7 @@ export type Round = {
   judge_notes: string;
   invalid_a: boolean;
   invalid_b: boolean;
+  overtime?: boolean;
 };
 
 export type Match = {
@@ -99,4 +111,14 @@ export type Live = {
   players: Player[];
   matches: Match[];
   standings: Standing[];
+};
+
+export type Thought = {
+  type?: string;
+  match_id: string;
+  side: "a" | "b";
+  round: number;
+  text: string;
+  player?: string;
+  done?: boolean;
 };

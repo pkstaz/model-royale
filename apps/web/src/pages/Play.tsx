@@ -15,6 +15,7 @@ export default function Play() {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [prompt, setPrompt] = useState("");
   const [avatarId, setAvatarId] = useState("");
+  const [temperature, setTemperature] = useState(0.4);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
 
@@ -31,6 +32,7 @@ export default function Play() {
         setAvatars(body.avatars);
         setPrompt(body.player.strategy_prompt || "");
         setAvatarId(body.player.avatar_id || "");
+        setTemperature(typeof body.player.temperature === "number" ? body.player.temperature : 0.4);
         if (body.event?.status && body.event.status !== "registration") {
           setTab("historial");
         }
@@ -49,7 +51,11 @@ export default function Play() {
     setError("");
     setMsg("");
     try {
-      const body = await api.patch("/api/play/me", { avatar_id: avatarId, strategy_prompt: prompt }, token);
+      const body = await api.patch(
+        "/api/play/me",
+        { avatar_id: avatarId, strategy_prompt: prompt, temperature },
+        token,
+      );
       setMe(body);
       setMsg(t("saved"));
     } catch (err) {
@@ -124,6 +130,25 @@ export default function Play() {
                 </button>
               ))}
             </div>
+            <label className="field" style={{ marginTop: 16 }}>
+              <span>
+                {t("temperature")} <strong className="temp-value">{temperature.toFixed(1)}</strong>
+              </span>
+              <div className="temp-row">
+                <span className="hint">0</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={temperature}
+                  disabled={player.locked}
+                  onChange={(e) => setTemperature(Number(e.target.value))}
+                />
+                <span className="hint">2</span>
+              </div>
+              <p className="hint">{t("temperatureHint")}</p>
+            </label>
             <label className="field" style={{ marginTop: 16 }}>
               <span>{t("extraInstructions")}</span>
               <textarea

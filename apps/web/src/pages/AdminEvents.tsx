@@ -3,7 +3,25 @@ import { Link } from "react-router-dom";
 import { api, storage } from "../api";
 import { tApiError, useT } from "../i18n";
 import type { Avatar, EventInfo, Live } from "../types";
-import { formatLabel, MatchCard, StatusPill } from "../ui";
+import { formatLabel, MatchCard, PayoffGrid, PAYOFF_PRESETS, StatusPill } from "../ui";
+
+function formFromEvent(item: EventInfo) {
+  return {
+    name: item.name,
+    code: item.code,
+    format: item.format,
+    rounds_per_match: item.rounds_per_match,
+    max_players: item.max_players,
+    min_players: item.min_players,
+    group_size: item.group_size,
+    advance_per_group: item.advance_per_group,
+    reveal_mode: item.reveal_mode,
+    payoff_preset: item.payoff_preset || "royale",
+    judge_avatar_id: item.judge_avatar_id || "",
+    invalid_move_policy: item.invalid_move_policy,
+    auto_advance: item.auto_advance,
+  };
+}
 
 const emptyEvent = {
   name: "",
@@ -30,6 +48,7 @@ export default function AdminEvents() {
   const [selected, setSelected] = useState<EventInfo | null>(null);
   const [live, setLive] = useState<Live | null>(null);
   const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
 
   const load = () => {
     api.get("/api/admin/events", token).then(setEvents).catch((err) => setError(tApiError(err.message, t)));
@@ -49,27 +68,43 @@ export default function AdminEvents() {
     return () => clearInterval(timer);
   }, [selected, token]);
 
-  const create = async (event: FormEvent) => {
-    event.preventDefault();
+  const save = async (event?: FormEvent) => {
+    event?.preventDefault();
     setError("");
+    setOk("");
     try {
-      const created = await api.post(
-        "/api/admin/events",
-        { ...form, name: form.name || t("newEvent"), judge_avatar_id: form.judge_avatar_id || null },
-        token,
-      );
-      setForm(emptyEvent);
+      const payload = { ...form, name: form.name || t("newEvent"), judge_avatar_id: form.judge_avatar_id || null };
+      const saved = selected
+        ? await api.patch(`/api/admin/events/${selected.id}`, payload, token)
+        : await api.post("/api/admin/events", payload, token);
+      setSelected(saved);
+      setForm(formFromEvent(saved));
+      setOk(t("eventSaved"));
       load();
-      setSelected(created);
     } catch (err) {
       setError(tApiError((err as Error).message, t));
     }
   };
 
-  const act = async (path: string) => {
+  const pick = (item: EventInfo) => {
+    setSelected(item);
+    setForm(formFromEvent(item));
+    setError("");
+    setOk("");
+  };
+
+  const startBlank = () => {
+    setSelected(null);
+    setLive(null);
+    setForm(emptyEvent);
+    setError("");
+    setOk("");
+  };
+
+  const act = async (path: string, body: Record<string, unknown> = {}) => {
     if (!selected) return;
     try {
-      const updated = await api.post(path, {}, token);
+      const updated = await api.post(path, body, token);
       setSelected(updated);
       load();
     } catch (err) {
@@ -77,30 +112,48 @@ export default function AdminEvents() {
     }
   };
 
+  const paramsLocked = selected?.status === "running";
+  const canStart = selected && (selected.status === "draft" || selected.status === "registration");
+  const roundOpen = Boolean(
+    live?.matches.some((item) => item.status === "pending" || item.status === "running"),
+  );
+  const hasQueued = Boolean(live?.matches.some((item) => item.status === "queued"));
+  const moreRounds =
+    selected?.status === "running" &&
+    !roundOpen &&
+    (hasQueued || (selected.format !== "round_robin" && (live?.players.filter((p) => !p.eliminated).length || 0) > 1));
+
   return (
     <>
       <p className="kicker">{t("maintainer")}</p>
       <h1>{t("events")}</h1>
       <p className="hint">{t("eventsHint")}</p>
       {error ? <p className="flash">{error}</p> : null}
+      {ok ? <p className="okmsg">{ok}</p> : null}
       <div className="grid grid-2" style={{ marginTop: 16 }}>
-        <form className="card" onSubmit={create}>
-          <h3>{t("createEvent")}</h3>
+        <form className="card" onSubmit={save} noValidate>
+          <h3>{selected ? t("editEvent") : t("createEvent")}</h3>
           <label className="field">
             <span>{t("name")}</span>
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder={t("newEvent")}
+              disabled={Boolean(selected)}
+            />
+          </label>
+          {selected ? <p className="hint">{t("nameLocked")}</p> : null}
+          <label className="field">
+            <span>{t("codeAuto")}</span>
+            <input
+              value={form.code}
+              maxLength={24}
+              onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") })}
             />
           </label>
           <label className="field">
-            <span>{t("codeAuto")}</span>
-            <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} />
-          </label>
-          <label className="field">
             <span>{t("format")}</span>
-            <select value={form.format} onChange={(e) => setForm({ ...form, format: e.target.value })}>
+            <select value={form.format} disabled={paramsLocked} onChange={(e) => setForm({ ...form, format: e.target.value })}>
               <option value="elimination">{t("fmtElimination")}</option>
               <option value="round_robin">{t("fmtRoundRobin")}</option>
               <option value="groups">{t("fmtGroups")}</option>
@@ -113,6 +166,7 @@ export default function AdminEvents() {
               min={1}
               max={21}
               value={form.rounds_per_match}
+              disabled={paramsLocked}
               onChange={(e) => setForm({ ...form, rounds_per_match: Number(e.target.value) })}
             />
           </label>
@@ -122,6 +176,7 @@ export default function AdminEvents() {
               type="number"
               min={2}
               value={form.max_players}
+              disabled={paramsLocked}
               onChange={(e) => setForm({ ...form, max_players: Number(e.target.value) })}
             />
           </label>
@@ -149,7 +204,7 @@ export default function AdminEvents() {
           ) : null}
           <label className="field">
             <span>{t("whatModelSees")}</span>
-            <select value={form.reveal_mode} onChange={(e) => setForm({ ...form, reveal_mode: e.target.value })}>
+            <select value={form.reveal_mode} disabled={paramsLocked} onChange={(e) => setForm({ ...form, reveal_mode: e.target.value })}>
               <option value="history">{t("revealHistory")}</option>
               <option value="blind">{t("revealBlind")}</option>
               <option value="open">{t("revealOpen")}</option>
@@ -157,17 +212,19 @@ export default function AdminEvents() {
           </label>
           <label className="field">
             <span>{t("payoffMatrix")}</span>
-            <select value={form.payoff_preset} onChange={(e) => setForm({ ...form, payoff_preset: e.target.value })}>
+            <select value={form.payoff_preset} disabled={paramsLocked} onChange={(e) => setForm({ ...form, payoff_preset: e.target.value })}>
               <option value="royale">{t("presetRoyale")}</option>
               <option value="prisoner">{t("presetPrisoner")}</option>
               <option value="chicken">{t("presetChicken")}</option>
               <option value="stag">{t("presetStag")}</option>
             </select>
+            <PayoffGrid payoff={PAYOFF_PRESETS[form.payoff_preset] || PAYOFF_PRESETS.royale} />
           </label>
           <label className="field">
             <span>{t("judgeOptional")}</span>
             <select
               value={form.judge_avatar_id}
+              disabled={paramsLocked}
               onChange={(e) => setForm({ ...form, judge_avatar_id: e.target.value })}
             >
               <option value="">{t("localParser")}</option>
@@ -178,9 +235,16 @@ export default function AdminEvents() {
               ))}
             </select>
           </label>
-          <button className="btn btn-primary" type="submit">
-            {t("create")}
-          </button>
+          <div className="btn-row">
+            <button className="btn btn-primary" type="button" onClick={() => save()}>
+              {selected ? t("save") : t("create")}
+            </button>
+            {selected ? (
+              <button className="btn" type="button" onClick={startBlank}>
+                {t("newEventAction")}
+              </button>
+            ) : null}
+          </div>
         </form>
         <div className="card">
           <h3>{t("list")}</h3>
@@ -198,7 +262,7 @@ export default function AdminEvents() {
                 padding: "10px 0",
                 cursor: "pointer",
               }}
-              onClick={() => setSelected(item)}
+              onClick={() => pick(item)}
               type="button"
             >
               <strong>{item.name}</strong> <span className="code">{item.code}</span> <StatusPill status={item.status} />
@@ -213,20 +277,40 @@ export default function AdminEvents() {
             {selected.name} <span className="code">{selected.code}</span>
           </h3>
           <p className="hint">{formatLabel(selected, t)}</p>
+          <p className="hint">{t("runModeHint")}</p>
           <div className="btn-row" style={{ margin: "12px 0" }}>
             <button className="btn btn-primary" onClick={() => act(`/api/admin/events/${selected.id}/open`)}>
               {t("openReg")}
             </button>
-            <button className="btn" onClick={() => act(`/api/admin/events/${selected.id}/start`)}>
-              {t("start")}
-            </button>
+            {canStart ? (
+              <>
+                <button className="btn btn-primary" onClick={() => act(`/api/admin/events/${selected.id}/start`, { auto_advance: true })}>
+                  {t("launchAll")}
+                </button>
+                <button className="btn" onClick={() => act(`/api/admin/events/${selected.id}/start`, { auto_advance: false })}>
+                  {t("runRound")}
+                </button>
+              </>
+            ) : null}
+            {selected.status === "running" && !selected.auto_advance ? (
+              <>
+                <button className="btn btn-primary" disabled={!moreRounds} onClick={() => act(`/api/admin/events/${selected.id}/next-round`)}>
+                  {t("nextRound")}
+                </button>
+                <button className="btn" onClick={() => act(`/api/admin/events/${selected.id}/run-all`)}>
+                  {t("launchRest")}
+                </button>
+              </>
+            ) : null}
             <button className="btn" onClick={() => act(`/api/admin/events/${selected.id}/reset`)}>
               {t("reset")}
             </button>
-            <Link className="btn" to={`/tablero/${selected.code}`}>
+            <Link className="btn" to={`/admin/tablero/${selected.code}`}>
               {t("viewBoard")}
             </Link>
           </div>
+          {selected.status === "running" && selected.auto_advance ? <p className="hint">{t("autoRunning")}</p> : null}
+          {selected.status === "running" && !selected.auto_advance && !roundOpen ? <p className="hint">{t("waitingNext")}</p> : null}
           {live ? (
             <>
               <p className="hint">
@@ -236,8 +320,8 @@ export default function AdminEvents() {
                 })}
               </p>
               <div className="grid grid-2">
-                {live.matches.slice(0, 6).map((match) => (
-                  <MatchCard key={match.id} match={match} />
+                {live.matches.slice(0, 8).map((match) => (
+                  <MatchCard key={match.id} match={match} compact showRound />
                 ))}
               </div>
             </>

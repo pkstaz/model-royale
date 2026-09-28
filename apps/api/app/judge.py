@@ -10,16 +10,17 @@ async def judge_move(
     judge: Avatar | None,
     policy: str,
 ) -> tuple[str, str, bool, str]:
-    parsed = extract_json(raw) or {}
+    parsed = extract_json(raw or "") or {}
     move = str(parsed.get("move", "")).upper().strip()
     rationale = str(parsed.get("rationale") or "")
     notes = ""
+    snippet = (raw or "")[:180]
     if move in {"A", "B"}:
         return move, rationale, False, notes
 
-    letter = _letter_guess(raw)
+    letter = _letter_guess(raw or "")
     if letter:
-        return letter, rationale or raw[:180], False, t("judge_local")
+        return letter, rationale or snippet, False, t("judge_local")
 
     if judge:
         try:
@@ -30,21 +31,22 @@ async def judge_move(
                         "role": "system",
                         "content": t("judge_system"),
                     },
-                    {"role": "user", "content": raw[:4000]},
+                    {"role": "user", "content": (raw or "")[:4000]},
                 ],
+                max_tokens=64,
             )
-            payload = extract_json(judged) or {}
+            payload = extract_json(judged or "") or {}
             move = str(payload.get("move") or "").upper()
             notes = str(payload.get("notes") or t("judge_notes"))
             if move in {"A", "B"}:
-                return move, rationale or raw[:180], False, notes
+                return move, rationale or snippet, False, notes
         except Exception as exc:  # noqa: BLE001
             notes = t("judge_failed", exc=exc)
 
     fallback = "A" if policy != "default_b" else "B"
     if policy == "zero":
-        return fallback, rationale or raw[:180], True, notes or t("invalid_zero")
-    return fallback, rationale or raw[:180], True, notes or t("invalid_fallback", move=fallback)
+        return fallback, rationale or snippet, True, notes or t("invalid_zero")
+    return fallback, rationale or snippet, True, notes or t("invalid_fallback", move=fallback)
 
 
 def _letter_guess(raw: str) -> str | None:

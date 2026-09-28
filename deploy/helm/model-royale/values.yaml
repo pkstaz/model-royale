@@ -52,7 +52,7 @@ api:
   mockInference: false
   corsOrigins: "*"
   jwtHours: 72
-  matchPauseSeconds: 1.1
+  matchPauseSeconds: 0.4
   llmTimeoutSeconds: 45
   service:
     type: ClusterIP

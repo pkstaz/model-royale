@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     mock_inference: bool = True
     cors_origins: str = "*"
     jwt_hours: int = 72
-    match_pause_seconds: float = 1.1
+    match_pause_seconds: float = 0.4
     llm_timeout_seconds: float = 45.0
     app_lang: str = "en"
 
